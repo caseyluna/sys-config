@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------
-# 🚀 FZF Universal Launcher Widget
+# launcher-widget.zsh — Ctrl-O: files / directories / history launcher
 # ------------------------------------------------------------------------------
 # Description:
 #   A single widget that lets you:

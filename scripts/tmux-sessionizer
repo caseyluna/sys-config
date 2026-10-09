@@ -14,16 +14,18 @@
 # Wired to: tmux prefix+f (.tmux.conf) and shell alias `ts` (aliases.shrc).
 # setup.sh symlinks this to ~/.local/bin/tmux-sessionizer (on PATH).
 #
-# Customize PROJECT_DIRS below to match your project roots.
+# Project roots: override with TMUX_PROJECT_DIRS="dir1:dir2" (colon-separated).
 # ------------------------------------------------------------------------------
 
-PROJECT_DIRS=(
-  "$HOME"
-  "$HOME/projects"
-  "$HOME/work"
-  "$HOME/dev"
-  "$HOME/sys-config"
-)
+if [[ -n "${TMUX_PROJECT_DIRS:-}" ]]; then
+  IFS=':' read -r -a PROJECT_DIRS <<< "$TMUX_PROJECT_DIRS"
+else
+  PROJECT_DIRS=(
+    "$HOME"
+    "$HOME/projects"
+    "${SYS_CONFIG:-$HOME/sys-config}"
+  )
+fi
 
 # If a path is passed directly, skip fzf
 if [[ $# -eq 1 ]]; then
@@ -44,7 +46,7 @@ else
     --height=50% \
     --reverse \
     --border=rounded \
-    --preview='ls --color=always {} 2>/dev/null || echo "(empty)"')
+    --preview='ls -G {} 2>/dev/null || echo "(empty)"')
 fi
 
 [[ -z "$selected" ]] && exit 0

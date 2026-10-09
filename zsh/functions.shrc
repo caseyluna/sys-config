@@ -486,3 +486,232 @@ phil-db-down() {
     log_ok "Socket files cleaned."
   fi
 }
+
+# ==============================================================================
+# 🧰 General helpers (navigation, files, search)
+# ==============================================================================
+# Oh My Zsh's git plugin pre-defines some of these names as aliases; a function
+# can't be defined over an alias, so drop them first.
+unalias grbi gwta gbf 2>/dev/null
+
+# USAGE: mkcd <dir>        — create a directory and cd into it
+mkcd() { mkdir -p "$1" && cd "$1" || return; }
+
+# USAGE: tmpd              — cd into a fresh temp directory
+tmpd() { cd "$(mktemp -d)" || return; }
+
+# USAGE: groot             — cd to the root of the current git repo
+groot() { cd "$(git rev-parse --show-toplevel 2>/dev/null || echo .)" || return; }
+
+# USAGE: rgf <pattern>     — ripgrep → fzf (bat preview) → open match in nvim at line
+rgf() {
+  [[ -z "$1" ]] && { echo "usage: rgf <pattern>"; return 1; }
+  local sel
+  sel=$(rg --line-number --no-heading --color=always --smart-case "$@" |
+    fzf --ansi --delimiter : \
+        --preview 'bat --style=numbers --color=always --highlight-line {2} {1}' \
+        --preview-window '+{2}-10') || return
+  local file line
+  file=$(echo "$sel" | cut -d: -f1)
+  line=$(echo "$sel" | cut -d: -f2)
+  nvim "+$line" "$file"
+}
+
+# USAGE: extract <archive> — unpack tar/gz/bz2/xz/zip/7z/rar by extension
+extract() {
+  [[ -f "$1" ]] || { echo "extract: '$1' is not a file"; return 1; }
+  case "$1" in
+    *.tar.bz2|*.tbz2) tar xjf "$1" ;;
+    *.tar.gz|*.tgz)   tar xzf "$1" ;;
+    *.tar.xz|*.txz)   tar xJf "$1" ;;
+    *.tar)            tar xf "$1" ;;
+    *.bz2)            bunzip2 "$1" ;;
+    *.gz)             gunzip "$1" ;;
+    *.xz)             unxz "$1" ;;
+    *.zip)            unzip "$1" ;;
+    *.7z)             7z x "$1" ;;
+    *.rar)            unrar x "$1" ;;
+    *) echo "extract: don't know how to extract '$1'"; return 1 ;;
+  esac
+}
+
+# USAGE: killport <port>   — kill whatever is listening on a port
+killport() {
+  [[ -z "$1" ]] && { echo "usage: killport <port>"; return 1; }
+  local pids
+  pids=$(lsof -ti ":$1") || { echo "nothing on port $1"; return 0; }
+  echo "$pids" | xargs kill -9 && log_ok "killed $(echo "$pids" | wc -l | tr -d ' ') process(es) on :$1"
+}
+
+# USAGE: fkill             — fuzzy pick a process and kill it
+fkill() {
+  local pid
+  pid=$(ps -ef | sed 1d | fzf -m --header='select process(es) to kill' | awk '{print $2}')
+  [[ -n "$pid" ]] && echo "$pid" | xargs kill -"${1:-9}"
+}
+
+# USAGE: serve [port]      — static file server for the current dir (default 8000)
+serve() { python3 -m http.server "${1:-8000}"; }
+
+# ==============================================================================
+# 🔧 Git helpers (fzf-powered)
+# ==============================================================================
+
+# USAGE: gbf               — fuzzy switch branch (local + remote), preview = log
+gbf() {
+  local branch
+  branch=$(git branch -a --format='%(refname:short)' | grep -v '^origin/HEAD' | sort -u |
+    fzf --prompt='branch ❯ ' --preview 'git log --oneline --graph -20 --color=always {}') || return
+  git switch "${branch#origin/}" 2>/dev/null || git switch -c "${branch#origin/}" --track "$branch"
+}
+
+# USAGE: grbi [n]          — interactive rebase of the last n commits (default 5)
+grbi() { git rebase -i "HEAD~${1:-5}"; }
+
+# USAGE: gbclean           — delete local branches already merged into main/dev
+gbclean() {
+  local base
+  for base in main dev; do
+    git show-ref --verify --quiet "refs/heads/$base" || continue
+    git branch --merged "$base" | grep -vE '^\*|^\s*(main|dev)$' | xargs -r -n1 git branch -d
+  done
+  log_ok "merged branches cleaned"
+}
+
+# USAGE: gprco             — fuzzy pick an open PR and check it out
+gprco() {
+  local pr
+  pr=$(gh pr list --limit 50 | fzf --prompt='PR ❯ ' | awk '{print $1}') || return
+  [[ -n "$pr" ]] && gh pr checkout "$pr"
+}
+
+# USAGE: gwta <branch>     — add a worktree at ../<repo>-<branch> (create branch if new)
+gwta() {
+  [[ -z "$1" ]] && { echo "usage: gwta <branch>"; return 1; }
+  local root name dir
+  root=$(git rev-parse --show-toplevel) || return
+  name=$(basename "$root")
+  dir="$(dirname "$root")/$name-${1//\//-}"
+  if git show-ref --verify --quiet "refs/heads/$1"; then
+    git worktree add "$dir" "$1"
+  else
+    git worktree add -b "$1" "$dir"
+  fi && cd "$dir" || return
+}
+
+# ==============================================================================
+# 🪟 tmux helpers
+# ==============================================================================
+
+# USAGE: ta [name]         — attach to session (default: main), creating it if needed
+ta() { tmux new-session -A -s "${1:-main}"; }
+
+# USAGE: tk                — fuzzy pick and kill a tmux session
+tk() {
+  local s
+  s=$(tmux ls -F '#S' 2>/dev/null | fzf --prompt='kill session ❯ ') || return
+  [[ -n "$s" ]] && tmux kill-session -t "$s"
+}
+
+# ==============================================================================
+# 🐍 Python helpers
+# ==============================================================================
+
+# USAGE: va [venv-dir]     — activate a venv (default .venv)
+va() { source "${1:-.venv}/bin/activate"; }
+
+# USAGE: pyclean           — remove __pycache__ and tool caches below cwd
+pyclean() {
+  find . -type d \( -name __pycache__ -o -name .pytest_cache -o -name .ruff_cache -o -name .mypy_cache \) -prune -exec rm -rf {} +
+  log_ok "python caches removed"
+}
+
+# ==============================================================================
+# 🦆 Data helpers (duckdb)
+# ==============================================================================
+
+# USAGE: csvq <file.csv> [sql]   — preview a CSV, or run SQL against it as table t
+csvq() {
+  [[ -f "$1" ]] || { echo "usage: csvq <file.csv> [sql]"; return 1; }
+  duckdb -c "CREATE VIEW t AS SELECT * FROM read_csv_auto('$1'); ${2:-SELECT * FROM t LIMIT 20};"
+}
+
+# USAGE: pq <file.parquet> [sql] — same for parquet
+pq() {
+  [[ -f "$1" ]] || { echo "usage: pq <file.parquet> [sql]"; return 1; }
+  duckdb -c "CREATE VIEW t AS SELECT * FROM read_parquet('$1'); ${2:-SELECT * FROM t LIMIT 20};"
+}
+
+# USAGE: jqf <file.json>   — fuzzy-browse the paths in a JSON file with live preview
+jqf() {
+  [[ -f "$1" ]] || { echo "usage: jqf <file.json>"; return 1; }
+  jq -r 'paths | map(tostring) | join(".")' "$1" | sort -u |
+    fzf --preview "jq -C '.\"'\"'{}\"'\"' $1 2>/dev/null | head -100" >/dev/null
+}
+
+# ==============================================================================
+# 🛠️ Terraform helpers
+# ==============================================================================
+
+# USAGE: tfw               — fuzzy select a terraform workspace
+tfw() {
+  local ws
+  ws=$(terraform workspace list | sed 's/^[* ] *//' | fzf --prompt='workspace ❯ ') || return
+  [[ -n "$ws" ]] && terraform workspace select "$ws"
+}
+
+# ==============================================================================
+# 🐳 Docker / ☸️ Kubernetes helpers (fzf pickers)
+# ==============================================================================
+
+# USAGE: dklf              — fuzzy pick a running container → follow logs
+dklf() {
+  local c
+  c=$(docker ps --format '{{.Names}}' | fzf --prompt='logs ❯ ') || return
+  [[ -n "$c" ]] && docker logs -f "$c"
+}
+
+# USAGE: dksh [shell]      — fuzzy pick a running container → exec shell (default sh)
+dksh() {
+  local c
+  c=$(docker ps --format '{{.Names}}' | fzf --prompt='exec ❯ ') || return
+  [[ -n "$c" ]] && docker exec -it "$c" "${1:-sh}"
+}
+
+# USAGE: kx                — fuzzy switch kube context
+kx() {
+  local ctx
+  ctx=$(kubectl config get-contexts -o name | fzf --prompt='context ❯ ') || return
+  [[ -n "$ctx" ]] && kubectl config use-context "$ctx"
+}
+
+# USAGE: kns               — fuzzy switch namespace in the current context
+kns() {
+  local ns
+  ns=$(kubectl get ns -o name | sed 's|namespace/||' | fzf --prompt='namespace ❯ ') || return
+  [[ -n "$ns" ]] && kubectl config set-context --current --namespace="$ns"
+}
+
+# USAGE: kl                — fuzzy pick a pod → follow logs
+kl() {
+  local pod
+  pod=$(kubectl get pods -o name | sed 's|pod/||' | fzf --prompt='logs ❯ ') || return
+  [[ -n "$pod" ]] && kubectl logs -f "$pod"
+}
+
+# USAGE: kex [shell]       — fuzzy pick a pod → exec shell (default sh)
+kex() {
+  local pod
+  pod=$(kubectl get pods -o name | sed 's|pod/||' | fzf --prompt='exec ❯ ') || return
+  [[ -n "$pod" ]] && kubectl exec -it "$pod" -- "${1:-sh}"
+}
+
+# ==============================================================================
+# 🤖 Claude Code helpers
+# ==============================================================================
+
+# USAGE: ccd <branch>      — new git worktree for <branch>, then start claude in it
+ccd() {
+  [[ -z "$1" ]] && { echo "usage: ccd <branch>"; return 1; }
+  gwta "$1" && claude
+}
