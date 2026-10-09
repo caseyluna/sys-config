@@ -4,13 +4,18 @@
 -- What it does: Text objects and moves for function, class, block (e.g. ]f [f
 --   for next/prev function, vaf for "around function"). Uses Treesitter.
 -- Keymaps: ]f [f (function), ]c [c (class), etc. No conflict with ]d [d (diagnostics).
--- Notes: Requires nvim-treesitter. Select_incremental next_* prev_* in opts.
+-- Notes: master branch — configured through nvim-treesitter.configs (the
+--   module itself has no setup()).
 -- ------------------------------------------------------------------------------
 
 return {
 	"nvim-treesitter/nvim-treesitter-textobjects",
+	branch = "master",
 	event = "BufReadPre",
 	dependencies = { "nvim-treesitter/nvim-treesitter" },
+	config = function(_, opts)
+		require("nvim-treesitter.configs").setup({ textobjects = opts })
+	end,
 	opts = {
 		select = {
 			enable = true,

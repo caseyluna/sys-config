@@ -1,29 +1,29 @@
 -- ------------------------------------------------------------------------------
--- bufferline.nvim (akinsho/bufferline.nvim) — Tabline for buffers/tabs
+-- bufferline.nvim (akinsho/bufferline.nvim) — Open buffers as tabs at the top
 -- ------------------------------------------------------------------------------
--- What it does: Displays open buffers or tabs as a tabline at the top with
---   icons and LSP diagnostic indicators. Mode can be "tabs" or "buffers".
--- Keymaps: <Tab> next tab, <S-Tab> previous tab.
--- Notes: Depends on nvim-web-devicons; diagnostics shown from nvim_lsp.
+-- Keymaps: ]b / [b next / previous buffer · <leader>bd close buffer (snacks.lua)
+-- Notes: <Tab> is NOT used here — it is <C-i> (jumplist forward) in Vim.
 -- ------------------------------------------------------------------------------
 
 return {
 	"akinsho/bufferline.nvim",
 	version = "*",
+	event = "VeryLazy",
 	dependencies = { "nvim-tree/nvim-web-devicons" },
 	keys = {
-		{ "<Tab>",   "<cmd>BufferLineCycleNext<CR>", desc = "Next tab",     mode = "n" },
-		{ "<S-Tab>", "<cmd>BufferLineCyclePrev<CR>", desc = "Previous tab", mode = "n" },
+		{ "]b", "<cmd>BufferLineCycleNext<CR>", desc = "Next buffer" },
+		{ "[b", "<cmd>BufferLineCyclePrev<CR>", desc = "Previous buffer" },
+		{ "<leader>bp", "<cmd>BufferLineTogglePin<CR>", desc = "Pin buffer" },
+		{ "<leader>bo", "<cmd>BufferLineCloseOthers<CR>", desc = "Close other buffers" },
 	},
 	opts = {
 		options = {
-			mode = "tabs", -- You can change this to "buffers" if preferred
-			separator_style = "slant", -- Looks cleaner with most color schemes
+			mode = "buffers",
+			separator_style = "slant",
 			show_close_icon = false,
-			show_tab_indicators = true,
-			enforce_regular_tabs = true,
-			diagnostics = "nvim_lsp", -- Adds LSP diagnostics as icons in tabline
+			diagnostics = "nvim_lsp",
 			always_show_bufferline = true,
+			offsets = { { filetype = "neo-tree", text = "Explorer", highlight = "Directory", text_align = "left" } },
 		},
 	},
 }

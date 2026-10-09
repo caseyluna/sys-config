@@ -2,16 +2,15 @@
 -- keymaps.lua — Core key bindings (non-plugin)
 -- ------------------------------------------------------------------------------
 -- What it does:
---   Sets leader to <Space> and defines: jk (exit insert), <leader>nh (nohl),
---   <leader>+/- (increment/decrement number), <leader>sv/sh/se/sx (splits),
---   <leader>to/tx/tn/tp/tf (tabs). Pane navigation <C-h/j/k/l> is in
+--   Leader = <Space>. Defines: jk (exit insert), <leader>nh (nohl),
+--   <leader>+/- (inc/dec number), <leader>s* (splits incl. sm maximize),
+--   <leader>t* (tabs). Pane navigation <C-h/j/k/l> lives in
 --   plugins/vim-tmux-navigator.lua so it works across tmux and Neovim.
 --
 -- How to interact:
 --   Add keymaps with vim.keymap.set(mode, lhs, rhs, { desc = "..." }).
---   Plugin keymaps are in each file under lua/cluna/plugins/. Full list: docs/CHEATSHEET.md.
+--   Plugin keymaps go in the plugin's own file. Full list: docs/KEYS.md.
 --
--- Author: Casey A. Thayer
 -- Location: ~/.config/nvim/lua/cluna/core/keymaps.lua
 -- ------------------------------------------------------------------------------
 
@@ -21,33 +20,49 @@ local keymap = vim.keymap
 -- ------------------------------------------------------------------------------
 -- ⌨️ General
 -- ------------------------------------------------------------------------------
--- jk in insert mode: fast way to leave insert without reaching for Escape
-keymap.set("i", "jk", "<ESC>", { desc = "Exit insert mode with jk" })
--- <leader>nh: clear search highlight after / or ? search
-keymap.set("n", "<leader>nh", ":nohl<CR>", { desc = "Clear search highlights" })
+keymap.set("i", "jk", "<ESC>", { desc = "Exit insert mode" })
+keymap.set("n", "<leader>nh", "<cmd>nohl<CR>", { desc = "Clear search highlights" })
 
 -- ------------------------------------------------------------------------------
--- 🔢 Numbers (under cursor or visual selection)
+-- 🔢 Numbers
 -- ------------------------------------------------------------------------------
--- <leader>+ / <leader>-: increment/decrement number at cursor (like Ctrl-A/Ctrl-X)
 keymap.set("n", "<leader>+", "<C-a>", { desc = "Increment number" })
 keymap.set("n", "<leader>-", "<C-x>", { desc = "Decrement number" })
 
 -- ------------------------------------------------------------------------------
--- 🔲 Window / split management
+-- 🔲 Splits  (<leader>s = splits; project search lives under <leader>S)
 -- ------------------------------------------------------------------------------
--- <leader>s + v/h/e/x: split vertical, split horizontal, equalize, close
-keymap.set("n", "<leader>sv", "<C-w>v", { desc = "Split window vertically" })
-keymap.set("n", "<leader>sh", "<C-w>s", { desc = "Split window horizontally" })
-keymap.set("n", "<leader>se", "<C-w>=", { desc = "Equalize split dimensions" })
-keymap.set("n", "<leader>sx", "<cmd>close<CR>", { desc = "Close current split" })
+keymap.set("n", "<leader>sv", "<C-w>v", { desc = "Split vertically" })
+keymap.set("n", "<leader>sh", "<C-w>s", { desc = "Split horizontally" })
+keymap.set("n", "<leader>se", "<C-w>=", { desc = "Equalize splits" })
+keymap.set("n", "<leader>sx", "<cmd>close<CR>", { desc = "Close split" })
+
+-- Maximize / restore the current split (replaces vim-maximizer)
+keymap.set("n", "<leader>sm", function()
+	if vim.t.maximized_layout then
+		vim.cmd(vim.t.maximized_layout)
+		vim.t.maximized_layout = nil
+	else
+		vim.t.maximized_layout = vim.fn.winrestcmd()
+		vim.cmd("wincmd _ | wincmd |")
+	end
+end, { desc = "Maximize / restore split" })
 
 -- ------------------------------------------------------------------------------
--- 🗂 Tab management
+-- 🗂 Tabs
 -- ------------------------------------------------------------------------------
--- <leader>t + o/x/n/p/f: new tab, close tab, next tab, previous tab, current buffer in new tab
-keymap.set("n", "<leader>to", "<cmd>tabnew<CR>", { desc = "Open new tab" })
-keymap.set("n", "<leader>tx", "<cmd>tabclose<CR>", { desc = "Close current tab" })
-keymap.set("n", "<leader>tn", "<cmd>tabn<CR>", { desc = "Go to next tab" })
-keymap.set("n", "<leader>tp", "<cmd>tabp<CR>", { desc = "Go to previous tab" })
-keymap.set("n", "<leader>tf", "<cmd>tabnew %<CR>", { desc = "Open current buffer in new tab" })
+keymap.set("n", "<leader>to", "<cmd>tabnew<CR>", { desc = "New tab" })
+keymap.set("n", "<leader>tx", "<cmd>tabclose<CR>", { desc = "Close tab" })
+keymap.set("n", "<leader>tn", "<cmd>tabn<CR>", { desc = "Next tab" })
+keymap.set("n", "<leader>tp", "<cmd>tabp<CR>", { desc = "Previous tab" })
+keymap.set("n", "<leader>tf", "<cmd>tabnew %<CR>", { desc = "Current buffer in new tab" })
+
+-- ------------------------------------------------------------------------------
+-- 📋 Yank feedback (native; replaces yanky's highlight)
+-- ------------------------------------------------------------------------------
+vim.api.nvim_create_autocmd("TextYankPost", {
+	group = vim.api.nvim_create_augroup("cluna_yank_highlight", { clear = true }),
+	callback = function()
+		vim.hl.on_yank({ timeout = 150 })
+	end,
+})

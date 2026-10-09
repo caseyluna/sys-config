@@ -1,87 +1,54 @@
 -- ------------------------------------------------------------------------------
--- conform.nvim (stevearc/conform.nvim) — Format on save and manual format
+-- conform.nvim (stevearc/conform.nvim) — Format on save and on demand
 -- ------------------------------------------------------------------------------
--- What it does: Runs formatters (prettier, black, stylua, shfmt, etc.) on save
---   or on demand.
--- Keymaps: <leader>mp — format buffer or visual selection manually.
--- Notes: Formatters must be installed (Mason or system). .shrc → filetype sh.
+-- What it does: Runs the formatter for the current filetype on save (falls back
+--   to the LSP's formatter). Formatters are installed by Mason (mason.lua).
+-- Keymaps: <leader>mp — format buffer (normal) or selection (visual)
+-- Notes: .shrc files are treated as shell. Errors are shown (notify_on_error)
+--   so a missing formatter is never silent.
 -- ------------------------------------------------------------------------------
 
 return {
 	"stevearc/conform.nvim",
-	event = { "BufReadPre", "BufNewFile" },
-	config = function()
-		-- Register .shrc extension as shell filetype (idiomatic Neovim 0.8+ API)
+	event = { "BufWritePre" },
+	cmd = { "ConformInfo" },
+	keys = {
+		{
+			"<leader>mp",
+			function()
+				require("conform").format({ lsp_format = "fallback", async = false, timeout_ms = 2000 })
+			end,
+			mode = { "n", "v" },
+			desc = "Format buffer / selection",
+		},
+	},
+	init = function()
 		vim.filetype.add({ extension = { shrc = "sh" } })
-
-		local conform = require("conform")
-
-		conform.setup({
-			-- Suppress notifications when a formatter binary is not installed.
-			-- Formatters silently skip; LSP fallback handles the rest.
-			notify_on_error = false,
-
-			formatters_by_ft = {
-				-- 🖼️ Frontend / Web
-				css = { "prettier" },
-				scss = { "prettier" },
-				less = { "prettier" },
-				html = { "prettier" },
-				json = { "prettier" },
-				yaml = { "prettier" },
-				markdown = { "markdownlint", "prettier" },
-				["markdown.mdx"] = { "markdownlint", "prettier" },
-
-				-- 💻 JavaScript / TypeScript
-				javascript = { "prettier" },
-				javascriptreact = { "prettier" },
-				typescript = { "prettier" },
-				typescriptreact = { "prettier" },
-
-				-- 🐍 Python
-				python = { "isort", "black" },
-
-				-- 🛠️ Lua
-				lua = { "stylua" },
-
-				-- 🐚 Shell (covers .sh and .shrc via vim.filetype.add above)
-				sh = { "shfmt" },
-
-				-- 🐘 SQL
-				sql = { "sql-formatter" },
-
-				-- 🐳 Docker
-				dockerfile = { "prettier" },
-
-				-- 🌍 Terraform
-				terraform = { "terraform_fmt" },
-				["terraform-vars"] = { "terraform_fmt" },
-
-				-- 🔧 Configs
-				toml = { "taplo" },
-				xml = { "xmlformat" },
-
-				-- 🚀 Systems Languages
-				rust = { "rustfmt" },
-				go = { "gofmt" },
-				java = { "google-java-format" },
-				c = { "clang-format" },
-				cpp = { "clang-format" },
-			},
-
-			-- 🔁 Format-on-save behavior
-			format_on_save = {
-				lsp_fallback = true,
-				async = false,
-				timeout_ms = 1000,
-			},
-		})
-
-		-- 🔑 Keymaps for manual format trigger
-		local fmt = function()
-			conform.format({ lsp_fallback = true, async = false, timeout_ms = 1000 })
-		end
-		vim.keymap.set({ "n", "v" }, "<leader>mp", fmt, { desc = "Format file or range (in visual mode)" })
-		vim.keymap.set("n", "<leader>gf", fmt, { desc = "Format file (conform)" })
 	end,
+	opts = {
+		notify_on_error = true,
+		formatters_by_ft = {
+			python = { "ruff_organize_imports", "ruff_format" },
+			lua = { "stylua" },
+			sh = { "shfmt" },
+			bash = { "shfmt" },
+			zsh = { "shfmt" },
+			sql = { "sqlfluff" },
+			terraform = { "terraform_fmt" },
+			["terraform-vars"] = { "terraform_fmt" },
+			hcl = { "terraform_fmt" },
+			toml = { "taplo" },
+			json = { "prettier" },
+			jsonc = { "prettier" },
+			yaml = { "prettier" },
+			markdown = { "prettier" },
+			html = { "prettier" },
+			css = { "prettier" },
+		},
+		formatters = {
+			shfmt = { prepend_args = { "-i", "2", "-ci" } }, -- 2-space indent, indent case branches
+			sqlfluff = { args = { "format", "--dialect", "ansi", "-" } },
+		},
+		format_on_save = { lsp_format = "fallback", timeout_ms = 2000 },
+	},
 }
