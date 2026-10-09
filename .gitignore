@@ -4,3 +4,9 @@
 
 # OS
 .DS_Store
+
+# Claude Code: machine-local settings are never committed
+.claude/settings.local.json
+
+# tmux plugins are installed by TPM into ~/.tmux/plugins — never tracked
+tmux/.tmux/

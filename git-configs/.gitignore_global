@@ -50,3 +50,5 @@ htmlcov/
 *.secret.*
 *.key
 *.pem
+
+**/.claude/settings.local.json
