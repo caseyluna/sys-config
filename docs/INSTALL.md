@@ -51,6 +51,7 @@ Source of truth: `do_links()` in `setup.sh`. Keep this table identical.
 | `~/.gitignore_global` | `git-configs/.gitignore_global` |
 | `~/.config/nvim` | `nvim/` |
 | `~/.config/starship.toml` | `starship/starship.toml` |
+| `~/Taskfile.yml` | `Taskfile.yml` (`task -g <name>` from anywhere) |
 | `~/.config/ghostty` | `ghostty/` |
 | `~/.local/bin/tmux-sessionizer` | `scripts/tmux-sessionizer` |
 | `~/.claude/settings.json` | `claude/settings.json` |

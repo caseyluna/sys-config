@@ -107,6 +107,8 @@ do_links() {
   link_file "$REPO/ghostty"              "$HOME/.config/ghostty"
   # scripts on PATH
   link_file "$REPO/scripts/tmux-sessionizer" "$HOME/.local/bin/tmux-sessionizer"
+  # go-task global Taskfile: `task -g <name>` from anywhere
+  link_file "$REPO/Taskfile.yml"         "$HOME/Taskfile.yml"
   # Claude Code — link individual files/dirs only; ~/.claude itself holds state
   link_file "$REPO/claude/settings.json"   "$HOME/.claude/settings.json"
   link_file "$REPO/claude/CLAUDE.md"       "$HOME/.claude/CLAUDE.md"

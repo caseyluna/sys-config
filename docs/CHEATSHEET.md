@@ -56,6 +56,22 @@ Neovim keys are in [KEYS.md](KEYS.md).
 | `gcpp` · `query-gcp` · `bigquery` · `delete_branches` | gcloud / BigQuery helpers · interactive branch delete (see file) |
 | `phil-db-up db…\|--all` · `phil-db-switch` · `phil-db-status` · `phil-db-down` | Cloud SQL proxy: start sockets · pick socket → mysql · show proxies · stop all |
 
+## Tasks (`Taskfile.yml`, go-task)
+
+Run `task <name>` in the repo, or `task -g <name>` from anywhere. `task` alone lists them.
+
+| Task | Does |
+|---|---|
+| `check` | lint + docs coverage + smoke — what CI runs; use before committing |
+| `lint` · `docs` · `smoke` · `validate` | the individual checks (`task smoke -- nvim` for one tool) |
+| `doctor` | validate + smoke + Brewfile check — "is this machine healthy?" |
+| `update` | Homebrew + nvim plugins + Mason tools + tmux plugins, then smoke |
+| `setup` · `links` · `clean-room` | bootstrap · re-link only · link into a throwaway `$HOME` |
+| `brew:check` · `brew:extra` · `brew:update` | missing/outdated · installed-but-undeclared (dry run) · install + upgrade |
+| `nvim:update` · `nvim:health` | Lazy sync + Mason update · checkhealth errors/warnings only |
+| `tmux:update` · `tmux:reload` | TPM install/update · reload config |
+| `zsh:cache` | rebuild completion caches ("zwc file has wrong version") |
+
 ## tmux (prefix = `Ctrl-A`)
 
 | Keys | Action |
