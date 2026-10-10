@@ -28,7 +28,8 @@
 # 1. Oh My Zsh
 # ------------------------------------------------------------------------------
 export ZSH="${ZSH:-$HOME/.oh-my-zsh}"
-export ZSH_COMPDUMP="$ZSH/cache/.zcompdump-$HOST"
+# Per zsh version: /bin/zsh and Homebrew zsh compile incompatible .zwc files
+export ZSH_COMPDUMP="$ZSH/cache/.zcompdump-$HOST-$ZSH_VERSION"
 
 # Plugins: custom ones (fzf-tab, zsh-autosuggestions, fast-syntax-highlighting)
 # are cloned into $ZSH_CUSTOM/plugins by setup.sh.
