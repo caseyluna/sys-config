@@ -274,7 +274,9 @@ fi
 # ------------------------------------------------------------------------------
 step "shell"
 ZSH_BIN="$(command -v zsh)"
-if [[ "${SHELL:-}" != "$ZSH_BIN" ]]; then
+if [[ "$(basename "${SHELL:-}")" == "zsh" ]]; then
+  log "login shell already zsh ($SHELL)"
+elif [[ "${SHELL:-}" != "$ZSH_BIN" ]]; then
   if grep -q "^$ZSH_BIN$" /etc/shells || [[ "$ZSH_BIN" == /bin/zsh ]]; then
     if confirm "Change login shell to $ZSH_BIN?"; then
       chsh -s "$ZSH_BIN" && log "login shell: $ZSH_BIN"
@@ -282,8 +284,6 @@ if [[ "${SHELL:-}" != "$ZSH_BIN" ]]; then
   else
     log "$ZSH_BIN not in /etc/shells; add it (sudo) then: chsh -s $ZSH_BIN"
   fi
-else
-  log "login shell already $ZSH_BIN"
 fi
 
 echo
