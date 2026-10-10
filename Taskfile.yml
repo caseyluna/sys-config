@@ -116,11 +116,20 @@ tasks:
 
   nvim:health:
     desc: Headless :checkhealth — prints only ERROR / WARNING lines
+    silent: true
+    vars:
+      # Mason probes every language toolchain it could install packages with.
+      # None of our Mason tools need these (and lazy.nvim has rocks disabled).
+      IGNORED: luarocks|Composer|PHP|julia|java|javac
     cmds:
       - |
         out=$(mktemp)
         nvim --headless -c "checkhealth vim.lsp lazy mason" -c "w! $out" -c "qa!" >/dev/null 2>&1
-        rg -n 'ERROR|WARNING' "$out" || echo "checkhealth: no errors or warnings"
+        ignored=$(rg -c 'WARNING ({{.IGNORED}}): not available' "$out" || true)
+        rg -n 'ERROR|WARNING' "$out" | rg -v 'WARNING ({{.IGNORED}}): not available' \
+          || echo "checkhealth: no errors or warnings"
+        [ "${ignored:-0}" -gt 0 ] && echo "(ignored ${ignored} Mason toolchain warnings for unused languages: {{.IGNORED}})"
+        rm -f "$out"
 
   # --- tmux -------------------------------------------------------------------
   tmux:update:
