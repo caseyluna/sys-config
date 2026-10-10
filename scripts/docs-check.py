@@ -3,7 +3,7 @@
 # docs-check.py — Fail if a keymap, alias or function is missing from the docs
 # ------------------------------------------------------------------------------
 # Checks (names only — whether descriptions are still accurate is left to the
-# docs-sync workflow / a human):
+# pr-autofix workflow / a human):
 #   <leader> keys in nvim/lua/**       → docs/KEYS.md
 #   aliases in zsh/aliases.shrc        → docs/CHEATSHEET.md
 #   functions in zsh/functions.shrc    → docs/CHEATSHEET.md
@@ -11,7 +11,7 @@
 # Intentionally undocumented names go in docs/.docs-ignore (one per line, #
 # comments). Names starting with `_` or `log_` are treated as internal.
 # Usage: python3 scripts/docs-check.py   → exit 0 all documented, 1 otherwise
-# Runs in CI (.github/workflows/lint.yml, docs-sync.yml); stdlib only.
+# Runs in CI (.github/workflows/lint.yml, pr-autofix.yml); stdlib only.
 # ------------------------------------------------------------------------------
 
 import re

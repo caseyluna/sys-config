@@ -1,0 +1,179 @@
+# ------------------------------------------------------------------------------
+# PR autofix — on PRs that change config: bootstrap a clean Mac, check that
+# everything starts and no keys conflict, let Claude fix what's broken, then
+# let Claude bring docs/ up to date. Fixes land as commits on the PR branch.
+# ------------------------------------------------------------------------------
+# Flow (one job, macos-latest):
+#   1. brew install core tools → setup.sh --no-brew (links, OMZ, TPM, Lazy, Mason)
+#   2. scripts/smoke.py              — red? → Claude fixes config → `fix:` commit
+#   3. Claude syncs docs to the diff → `docs:` commit
+#   4. push, re-dispatch lint.yml, then smoke.py + docs-check.py must be green
+# Auth: Claude subscription token. One-time setup:
+#   claude setup-token
+#   gh secret set CLAUDE_CODE_OAUTH_TOKEN
+# Guardrails: Claude only edits files. Fix commits include only config dirs;
+# docs commits only docs/. scripts/ (the checks) and scripts/smoke/allow.txt
+# are never committed by the bot — exceptions are a human decision.
+# GITHUB_TOKEN pushes don't trigger workflows (no loops). Same-repo PRs only.
+# ------------------------------------------------------------------------------
+name: PR autofix
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "nvim/**"
+      - "zsh/**"
+      - "tmux/**"
+      - "fzf/**"
+      - "ghostty/**"
+      - "claude/**"
+      - "scripts/**"
+      - "setup.sh"
+      - "Brewfile"
+      - ".github/workflows/pr-autofix.yml"
+      - "!nvim/lazy-lock.json"
+
+permissions:
+  contents: write # push fix/docs commits
+  actions: write # re-dispatch lint.yml
+  pull-requests: read
+  id-token: write # claude-code-action
+
+concurrency:
+  group: pr-autofix-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  autofix:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      BASE: ${{ github.event.pull_request.base.ref }}
+      HEAD_REF: ${{ github.head_ref }}
+      SHELL: /bin/zsh # setup.sh skips chsh when the shell is already zsh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Install core tools
+        run: brew install neovim tmux atuin fzf zoxide starship ripgrep fd fnm
+
+      - name: Cache nvim plugins + Mason tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/nvim/lazy
+            ~/.local/share/nvim/mason
+          key: nvim-${{ runner.os }}-${{ hashFiles('nvim/lazy-lock.json', 'nvim/lua/cluna/plugins/mason.lua') }}
+          restore-keys: nvim-${{ runner.os }}-
+
+      - name: Bootstrap (setup.sh)
+        run: bash setup.sh --no-brew
+
+      - name: Smoke check
+        id: smoke
+        continue-on-error: true
+        run: python3 scripts/smoke.py 2>&1 | tee .smoke-output.txt; exit "${PIPESTATUS[0]}"
+
+      - name: Claude fixes smoke failures
+        if: steps.smoke.outcome == 'failure'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: >-
+            --max-turns 60
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git diff:*),Bash(git log:*),Bash(python3 scripts/smoke.py:*),Bash(nvim --headless:*)"
+          prompt: |
+            This dotfiles repo's smoke check failed on a freshly bootstrapped Mac. Read CLAUDE.md first.
+            Its output is in .smoke-output.txt; the header comment of scripts/smoke.py explains
+            every check.
+
+            Fix the config so `python3 scripts/smoke.py` passes. Re-run it to confirm.
+            For context on what this PR intended: `git diff origin/${{ env.BASE }}...HEAD`.
+
+            How to fix:
+            - Key conflicts: keep the binding that predates this PR / is documented in docs/KEYS.md
+              or docs/CHEATSHEET.md; move the other to a free key in the same which-key group.
+            - Prefix conflicts (<Space>a vs <Space>am): move the shorter one to a 2-key form in its
+              group (e.g. <Space>aa) and update its which-key / lazy `keys` entry.
+            - Broken LSP server: switch to a maintained server in BOTH lspconfig.lua and mason.lua,
+              or remove it from both if none exists.
+            - Errors / plugin overrides: fix the root cause; never silence with pcall or by deleting
+              a feature.
+            Rules: edit only nvim/, zsh/, tmux/, fzf/, ghostty/. Don't edit scripts/ or
+            scripts/smoke/allow.txt. Follow CLAUDE.md conventions (banner comments, one plugin
+            per file). If a failure can't be fixed safely, leave it and explain why.
+
+            Finally write a short markdown summary of each change (one bullet per fix: what was
+            wrong → what you changed) to .fix-summary.md in the repo root.
+
+      - name: Commit fixes
+        if: steps.smoke.outcome == 'failure'
+        run: |
+          git add -- nvim zsh tmux fzf ghostty
+          if git diff --cached --quiet; then echo "Claude made no fixes."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          summary=.fix-summary.md; [ -f "$summary" ] || echo "Generated by pr-autofix.yml." > "$summary"
+          git commit -m "fix: resolve smoke-check failures" -F "$summary"
+
+      - name: Claude updates docs
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: >-
+            --max-turns 40
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git diff:*),Bash(git log:*),Bash(python3 scripts/docs-check.py)"
+          prompt: |
+            You keep this dotfiles repo's docs in sync with its config. Read CLAUDE.md first.
+
+            1. See what this PR changed (including any `fix:` commit just made by CI):
+               `git diff origin/${{ env.BASE }}...HEAD -- . ':!docs' ':!nvim/lazy-lock.json'`
+            2. Update the matching doc(s) so they describe the config as it now is:
+               - nvim/ keymaps, plugins           → docs/KEYS.md
+               - zsh/ aliases + functions, tmux/  → docs/CHEATSHEET.md
+               - setup.sh, Brewfile, links        → docs/INSTALL.md
+               - troubleshooting-relevant changes → docs/DEBUG.md
+               - new workflows / scripts          → docs/WORKFLOWS.md, docs/TESTING.md
+               Add new items, change descriptions that are now wrong, remove items that no longer exist.
+            3. Run `python3 scripts/docs-check.py` and fix anything it reports. Only add to
+               docs/.docs-ignore for genuinely internal helpers.
+
+            Rules: edit only files under docs/. Match each doc's existing format exactly
+            (task-first tables in KEYS.md, `·`-separated alias lines in CHEATSHEET.md); keep
+            descriptions terse. Don't reword or reorganize content unrelated to this diff.
+            If the docs are already accurate, change nothing.
+
+      - name: Commit docs
+        run: |
+          git add -- docs
+          if git diff --cached --quiet; then echo "Docs already up to date."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "docs: sync with config changes" -m "Generated by pr-autofix.yml (Claude Code)."
+
+      - name: Push
+        id: push
+        run: |
+          if [ "$(git rev-parse HEAD)" = "$(git rev-parse "origin/$HEAD_REF")" ]; then
+            echo "pushed=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          git push origin "HEAD:$HEAD_REF"
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Re-run lint on the new head
+        if: steps.push.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run lint.yml --ref "$HEAD_REF"
+
+      - name: Final check (must be green)
+        run: |
+          python3 scripts/smoke.py
+          python3 scripts/docs-check.py

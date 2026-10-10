@@ -12,6 +12,7 @@ Run from the repo root (`$SYS_CONFIG`, default `~/sys-config`). Each step is rea
 3. `nvim --headless -c 'checkhealth vim.lsp lazy mason' -c 'w! /tmp/checkhealth.txt' -c 'qa!'` then
    `rg -n 'ERROR|WARNING' /tmp/checkhealth.txt` — report every ERROR; WARNINGs only if actionable.
 4. `brew bundle check --file=Brewfile` — anything missing from the Brewfile install.
+5. `python3 scripts/smoke.py` — tools start clean, LSPs attach, no conflicting keys (nvim/tmux/zsh).
 
 Report as a short table: **check · status · fix**. If everything passes say so in one line.
 Do not edit files unless asked; propose the fix with the file:line.

@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------
 # Lint config on every push / PR (syntax + load checks; no full install).
 # Runs scripts/lint.sh (incl. docs coverage). See docs/TESTING.md.
-# workflow_dispatch: docs-sync.yml re-runs this after pushing a docs commit
+# workflow_dispatch: pr-autofix.yml re-runs this after pushing fix/docs commits
 # (pushes made with GITHUB_TOKEN don't trigger push/pull_request events).
 # ------------------------------------------------------------------------------
 name: Lint

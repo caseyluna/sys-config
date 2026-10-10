@@ -12,7 +12,7 @@
 #   stylua        --check nvim/ (if installed)
 #   jq            every .json in the repo parses
 #   docs          keymaps/aliases/functions are in docs/ (scripts/docs-check.py;
-#                 warning locally, failure in CI — docs-sync.yml writes them)
+#                 warning locally, failure in CI — pr-autofix.yml writes them)
 # Usage: bash scripts/lint.sh   → exit 0 all good, 1 otherwise
 # ------------------------------------------------------------------------------
 
@@ -93,7 +93,7 @@ if command -v python3 &>/dev/null; then
   elif [[ -n "${CI:-}" ]]; then
     echo "$out"; fail "docs/ out of date (python3 scripts/docs-check.py)"
   else
-    echo "$out"; echo "[lint]   warn docs/ out of date — CI fails until docs-sync (or you) updates them"
+    echo "$out"; echo "[lint]   warn docs/ out of date — CI fails until pr-autofix (or you) updates them"
   fi
 else
   skip "python3 not installed"
