@@ -5,6 +5,7 @@
 # Verifies every symlink from docs/INSTALL.md, required tools, that Homebrew
 # binaries actually run (dyld sanity), git identity, tmux plugins, and a
 # headless Neovim checkhealth. Run after setup.sh or after pulling changes.
+# Same checks on macOS and Linux, plus a Linux section (clipboard, notify, docker).
 #
 # Usage: bash scripts/validate.sh        (exit 1 if anything is ✗)
 # ------------------------------------------------------------------------------
@@ -84,6 +85,17 @@ ctrl_r=$(zsh -ilc 'bindkey' 2>/dev/null | awk '$1=="\"^R\"" {print $2}')
 [[ "$ctrl_r" == "atuin-search" ]] && ok "Ctrl-R → atuin" || bad "Ctrl-R → ${ctrl_r:-unbound} (expected atuin-search)"
 [[ -d "$HOME/.oh-my-zsh" ]] && ok "oh-my-zsh" || bad "oh-my-zsh missing"
 [[ -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fzf-tab" ]] && ok "fzf-tab plugin" || bad "fzf-tab plugin missing (setup.sh clones it)"
+
+# ------------------------------------------------------------------------------
+if [[ "$(uname -s)" == Linux ]]; then
+  section "Linux integration (scripts/linux/<distro>.sh)"
+  # ----------------------------------------------------------------------------
+  if command -v wl-copy &>/dev/null || command -v xclip &>/dev/null; then ok "clipboard (wl-copy / xclip)"; else bad "no wl-copy/xclip — tmux-yank, nvim + and pbcopy fall back to OSC 52 only"; fi
+  command -v notify-send &>/dev/null && ok "notify-send" || bad "notify-send missing (libnotify) — Claude notify hook is silent"
+  if command -v docker &>/dev/null; then
+    id -nG | grep -qw docker && ok "$(id -un) in group docker" || bad "$(id -un) not in group docker: sudo usermod -aG docker $(id -un), then log out/in"
+  fi
+fi
 
 # ------------------------------------------------------------------------------
 section "Git"

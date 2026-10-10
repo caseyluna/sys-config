@@ -21,8 +21,10 @@ export SYS_CONFIG="${${(%):-%x}:A:h:h}"
 # PATH as a deduplicated array: later `path+=` / `path=(x $path)` never add dupes
 typeset -U path PATH
 
-# Homebrew (Apple Silicon, Intel, Linuxbrew) — sets HOMEBREW_PREFIX and PATH
-for _brew in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+# Homebrew (Apple Silicon, Intel, Linuxbrew) — sets HOMEBREW_PREFIX and PATH.
+# On Linux it goes ahead of /usr/bin, so brew's tools win over distro ones — the
+# same versions/names as macOS (bat not batcat, fd not fdfind).
+for _brew in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew "$HOME/.linuxbrew/bin/brew"; do
   if [[ -x "$_brew" ]]; then
     eval "$("$_brew" shellenv)"
     break
@@ -44,5 +46,6 @@ path=(
 export EDITOR="nvim"
 export VISUAL="nvim"
 
-# Python builds against Homebrew's OpenSSL (pyenv install)
+# Python builds against Homebrew's OpenSSL (pyenv install; macOS only — on
+# Linux python-build uses the distro -devel libs from scripts/linux/<distro>.sh)
 export PYTHON_BUILD_HOMEBREW_OPENSSL_FORMULA=openssl@3

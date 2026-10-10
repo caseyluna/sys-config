@@ -34,9 +34,9 @@ Neovim keys are in [KEYS.md](KEYS.md).
 
 **Claude** `cc` claude · `ccc` continue · `ccr` resume
 
-**System** `ports` · `ip` · `devip` · `flushdns` · `brewup` · `brewdiff` (installed but not in Brewfile)
+**System** `ports` · `ip` public IP (Linux's own: `command ip a`) · `devip` LAN IP · `flushdns` (macOS dscacheutil / Linux resolvectl) · `brewup` · `brewdiff` (installed but not in Brewfile)
 
-**Work** `R` · `db-proxy-prod` · `db-cli-prod` · `ppp`
+**Work** `R` · `db-proxy-prod` · `db-cli-prod` · `ppp` (macOS keychain)
 
 ## Functions (`zsh/functions.shrc` — each has a `# USAGE:` line)
 
@@ -55,6 +55,7 @@ Neovim keys are in [KEYS.md](KEYS.md).
 | `ccd br` | worktree for branch + claude |
 | `gcpp` · `query-gcp` · `bigquery` · `delete_branches` | gcloud / BigQuery helpers · interactive branch delete (see file) |
 | `phil-db-up db…\|--all` · `phil-db-switch` · `phil-db-status` · `phil-db-down` | Cloud SQL proxy: start sockets · pick socket → mysql · show proxies · stop all |
+| `pbcopy` · `pbpaste` · `open x…` | **Linux shims** (macOS has the real ones): clipboard via wl-copy / xclip / OSC 52 over SSH · `xdg-open` |
 
 ## Tasks (`Taskfile.yml`, go-task)
 
@@ -94,3 +95,4 @@ Run `task <name>` in the repo, or `task -g <name>` from anywhere. `task` alone l
 ## Ghostty
 
 `⌘D` split right · `⌘⇧D` split down · `⌘←→↑↓` move between splits · `⌘=` equalize. Font: JetBrainsMono Nerd Font. Theme: catppuccin-mocha.
+Linux: `⌘` is the Super key (GNOME claims `Super+arrows` for tiling — rebind one side).

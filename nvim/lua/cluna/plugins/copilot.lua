@@ -16,7 +16,12 @@ local function node_bin()
 			return node
 		end
 	end
-	local fnm_dir = vim.env.FNM_DIR or (vim.env.HOME .. "/Library/Application Support/fnm")
+	-- fnm's default dir: macOS ~/Library/Application Support/fnm, Linux $XDG_DATA_HOME/fnm
+	local fnm_dir = vim.env.FNM_DIR
+		or (
+			vim.fn.has("mac") == 1 and vim.env.HOME .. "/Library/Application Support/fnm"
+			or (vim.env.XDG_DATA_HOME or vim.env.HOME .. "/.local/share") .. "/fnm"
+		)
 	for _, p in ipairs(vim.fn.glob(fnm_dir .. "/node-versions/*/installation/bin/node", true, true)) do
 		local major = tonumber((vim.fn.system({ p, "--version" }):match("v(%d+)")))
 		if major and major >= 22 then

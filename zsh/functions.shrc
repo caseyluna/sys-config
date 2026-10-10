@@ -203,7 +203,7 @@ query-gcp() {
 #   in Firefox using that project context.
 #
 # REQUIREMENTS:
-#   - Firefox installed and accessible via `open -a firefox`
+#   - macOS: Arc (Phillies profile); Linux: default browser via xdg-open
 #   - gcloud CLI must be configured
 #
 # EXAMPLES:
@@ -235,7 +235,11 @@ bigquery() {
 
   # 🌐 Open browser to BigQuery UI
   local full_url="https://console.cloud.google.com/bigquery?project=${current_project}&supportedpurview=project&ws=!1m0"
-  open -a "Arc" "$full_url" --args --profile "Phillies"
+  if [[ $OSTYPE == darwin* ]]; then
+    open -a "Arc" "$full_url" --args --profile "Phillies"
+  else
+    open "$full_url" # default browser (xdg-open shim)
+  fi
 }
 
 # ------------------------------------------------------------------------------
@@ -552,6 +556,51 @@ fkill() {
 
 # USAGE: serve [port]      — static file server for the current dir (default 8000)
 serve() { python3 -m http.server "${1:-8000}"; }
+
+# ==============================================================================
+# 🐧 macOS commands on Linux — pbcopy / pbpaste / open behave the same on both
+# ==============================================================================
+# Defined only on Linux (macOS has the real ones), so muscle memory, aliases
+# (cpwd) and scripts work unchanged. Clipboard: wl-copy/wl-paste (Wayland) →
+# xclip (X11) → OSC 52 escape (SSH / no display; copy only, through tmux too).
+if [[ $OSTYPE == linux* ]]; then
+  # USAGE: pbcopy            — stdin → system clipboard (Linux shim)
+  pbcopy() {
+    if [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wl-copy &>/dev/null; then
+      wl-copy
+    elif [[ -n "${DISPLAY:-}" ]] && command -v xclip &>/dev/null; then
+      xclip -selection clipboard
+    else
+      local b64 seq
+      b64=$(base64 | tr -d '\n')
+      seq=$'\e]52;c;'"$b64"$'\a'
+      [[ -n "${TMUX:-}" ]] && seq=$'\ePtmux;\e'"$seq"$'\e\\' # allow-passthrough is on
+      printf '%s' "$seq" >/dev/tty
+    fi
+  }
+
+  # USAGE: pbpaste           — system clipboard → stdout (Linux shim)
+  pbpaste() {
+    if [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wl-paste &>/dev/null; then
+      wl-paste --no-newline
+    elif [[ -n "${DISPLAY:-}" ]] && command -v xclip &>/dev/null; then
+      xclip -selection clipboard -o
+    else
+      echo "pbpaste: no Wayland/X11 clipboard in this session" >&2
+      return 1
+    fi
+  }
+
+  # USAGE: open <file|dir|url>… — open with the default app (Linux shim → xdg-open)
+  #        (Ubuntu's /usr/bin/open is openvt; this shadows it in interactive zsh)
+  open() {
+    [[ $# -eq 0 ]] && { echo "usage: open <file|dir|url>…"; return 1; }
+    local target
+    for target in "$@"; do
+      xdg-open "$target" >/dev/null 2>&1 &!
+    done
+  }
+fi
 
 # ==============================================================================
 # 🔧 Git helpers (fzf-powered)

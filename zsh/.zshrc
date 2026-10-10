@@ -10,6 +10,9 @@
 #      fzf widgets (Ctrl-E files, Ctrl-O launcher), pyenv, fnm, kubectl, gcloud
 #   6. Aliases + functions (zsh/aliases.shrc, zsh/functions.shrc)
 #
+# Same file on macOS and Linux: OS differences are `$OSTYPE` checks inline
+# (darwin* / linux*); Linux gets pbcopy/pbpaste/open shims in functions.shrc.
+#
 # Key bindings owned here:  Ctrl-R atuin · Ctrl-T fzf files · Alt-C fzf cd ·
 #                           Ctrl-E fzf file→buffer · Ctrl-O launcher · Tab fzf-tab
 #
@@ -38,11 +41,11 @@ plugins=(
   git
   docker
   docker-compose
-  macos
   virtualenv
   zsh-autosuggestions
   fast-syntax-highlighting
 )
+[[ $OSTYPE == darwin* ]] && plugins+=(macos)
 
 [[ -f "$ZSH/oh-my-zsh.sh" ]] && source "$ZSH/oh-my-zsh.sh"
 
@@ -52,8 +55,11 @@ plugins=(
 if [[ -f "${ZSH_CUSTOM:-$ZSH/custom}/plugins/fzf-tab/fzf-tab.plugin.zsh" ]]; then
   source "${ZSH_CUSTOM:-$ZSH/custom}/plugins/fzf-tab/fzf-tab.plugin.zsh"
   zstyle ':completion:*' menu no                      # fzf-tab owns Tab
-  zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls -G $realpath 2>/dev/null'
-  zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls -G $realpath 2>/dev/null'
+  # BSD ls (macOS) colors with -G; GNU ls (Linux) reads -G as --no-group
+  [[ $OSTYPE == darwin* ]] && _ls_preview='ls -G' || _ls_preview='ls --color=always'
+  zstyle ':fzf-tab:complete:cd:*' fzf-preview "$_ls_preview \$realpath 2>/dev/null"
+  zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview "$_ls_preview \$realpath 2>/dev/null"
+  unset _ls_preview
   zstyle ':fzf-tab:*' fzf-flags '--height=50%' '--reverse' '--border=rounded'
   zstyle ':fzf-tab:*' switch-group ',' '.'            # , and . cycle completion groups
 fi
@@ -112,11 +118,16 @@ command -v fnm &>/dev/null && eval "$(fnm env --use-on-cd)"
 # kubectl completion
 command -v kubectl &>/dev/null && source <(kubectl completion zsh)
 
-# gcloud (Homebrew cask gcloud-cli): PATH + completion
-if [[ -n "${HOMEBREW_PREFIX:-}" && -f "$HOMEBREW_PREFIX/share/google-cloud-sdk/path.zsh.inc" ]]; then
-  source "$HOMEBREW_PREFIX/share/google-cloud-sdk/path.zsh.inc"
-  source "$HOMEBREW_PREFIX/share/google-cloud-sdk/completion.zsh.inc"
-fi
+# gcloud: PATH + completion — Homebrew cask (macOS) or google-cloud-cli
+# dnf/apt package (Linux: binary already in /usr/bin, completion in /usr/share|lib)
+for _gc in ${HOMEBREW_PREFIX:+"$HOMEBREW_PREFIX/share/google-cloud-sdk"} /usr/share/google-cloud-sdk /usr/lib/google-cloud-sdk; do
+  if [[ -f "$_gc/completion.zsh.inc" ]]; then
+    [[ -f "$_gc/path.zsh.inc" ]] && source "$_gc/path.zsh.inc"
+    source "$_gc/completion.zsh.inc"
+    break
+  fi
+done
+unset _gc
 
 # ------------------------------------------------------------------------------
 # 6. Aliases and functions

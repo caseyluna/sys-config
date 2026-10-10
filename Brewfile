@@ -6,8 +6,14 @@
 #   `brew bundle --no-upgrade --file=Brewfile`. Each section says *why* the
 #   packages are there so pruning stays easy.
 #
+#   Same file on macOS and Linux (Homebrew on Linux). Anything that only exists
+#   on macOS (casks, macOS-only formulae) sits in an `if OS.mac?` block; the
+#   Linux equivalents come from the distro script (scripts/linux/<distro>.sh).
+#
 # How to interact:
 #   Add a line, then: brew bundle --file="$SYS_CONFIG/Brewfile"
+#   macOS-only? Put it in an `if OS.mac?` block and add the Linux equivalent
+#   to scripts/linux/fedora.sh + ubuntu.sh.
 #   See what's installed but not listed here:  brewdiff   (alias)
 #   Formatters/linters/LSPs for Neovim are NOT here — Mason installs them
 #   (nvim/lua/cluna/plugins/mason.lua).
@@ -28,7 +34,7 @@ brew "fzf"                    # Fuzzy finder — Ctrl-T / Alt-C / fzf-tab / widg
 brew "zoxide"                 # Smarter cd (z, zi)
 brew "direnv"                 # Per-directory .envrc
 brew "zsh-completions"        # Extra completion definitions
-brew "terminal-notifier"      # macOS notifications from scripts / Claude hooks
+brew "terminal-notifier" if OS.mac? # macOS notifications (Linux: notify-send, distro pkg)
 
 # ------------------------------------------------------------------------------
 # Core CLI — the tools aliases/functions/widgets assume exist
@@ -87,13 +93,15 @@ brew "fnm"                    # Node version manager (setup.sh installs LTS); do
 brew "duckdb"                 # csvq / pq helpers; local SQL on files
 brew "sqlite"
 brew "mycli"                  # MySQL CLI (phil-db-* functions)
-cask "dbeaver-community"      # GUI SQL client
+cask "dbeaver-community" if OS.mac? # GUI SQL client (Linux: flatpak, distro script)
 
 # ------------------------------------------------------------------------------
 # Containers, Kubernetes, cloud, infra
 # ------------------------------------------------------------------------------
-brew "docker", link: false    # CLI (Docker Desktop cask provides the daemon)
-brew "docker-completion"
+if OS.mac?
+  brew "docker", link: false  # CLI (Docker Desktop cask provides the daemon)
+  brew "docker-completion"    # (Linux: docker engine + CLI from the distro script)
+end
 brew "lazydocker"             # Docker TUI (ld)
 brew "hadolint"               # Dockerfile linter
 brew "kubernetes-cli"         # kubectl (kx, kns, kl, kex)
@@ -101,8 +109,10 @@ brew "helm"
 brew "k9s"                    # Kubernetes TUI (homebrew-core)
 brew "go-task"                # Taskfile runner
 brew "hashicorp/tap/terraform" # tfi/tfp/tfa…, terraformls in nvim
-cask "gcloud-cli"             # gcloud / bq (functions.shrc gcpp, query-gcp)
-cask "docker-desktop"
+if OS.mac?
+  cask "gcloud-cli"           # gcloud / bq (Linux: google-cloud-cli, distro script)
+  cask "docker-desktop"
+end
 
 # ------------------------------------------------------------------------------
 # Docs & linting (non-Mason)
@@ -119,19 +129,26 @@ brew "openblas"               # Linear algebra for R / NumPy
 
 # ------------------------------------------------------------------------------
 # Terminal emulator + fonts (ghostty/config expects JetBrainsMono Nerd Font)
+# Linux: ghostty + Nerd Fonts come from the distro script.
 # ------------------------------------------------------------------------------
-cask "ghostty"
-cask "font-jetbrains-mono-nerd-font"
+if OS.mac?
+  cask "ghostty"
+  cask "font-jetbrains-mono-nerd-font"
+end
 
 # ------------------------------------------------------------------------------
 # AI tooling
 # ------------------------------------------------------------------------------
-cask "claude-code"            # Claude Code CLI (config in claude/, linked by setup.sh)
+# Claude Code CLI (config in claude/, linked by setup.sh).
+# Linux: setup.sh step 9 runs the native installer (→ ~/.local/bin/claude).
+cask "claude-code" if OS.mac?
 
 # ------------------------------------------------------------------------------
-# GUI apps
+# GUI apps (Linux: DBeaver / Zoom as flatpaks via the distro script)
 # ------------------------------------------------------------------------------
-cask "notion"
-cask "tuple"
-cask "zoom"
-cask "dockfix"
+if OS.mac?
+  cask "notion"
+  cask "tuple"
+  cask "zoom"
+  cask "dockfix"
+end

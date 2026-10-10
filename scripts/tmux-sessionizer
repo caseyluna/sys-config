@@ -46,7 +46,7 @@ else
     --height=50% \
     --reverse \
     --border=rounded \
-    --preview='ls -G {} 2>/dev/null || echo "(empty)"')
+    --preview='ls --color=always {} 2>/dev/null || ls -G {} 2>/dev/null || echo "(empty)"')
 fi
 
 [[ -z "$selected" ]] && exit 0

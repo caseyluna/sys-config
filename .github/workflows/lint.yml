@@ -21,7 +21,11 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y zsh tmux neovim shellcheck
+          sudo apt-get install -y zsh tmux neovim shellcheck ruby
+
+      # Brewfile is Ruby (OS.mac? blocks) — a syntax error breaks bootstrap everywhere
+      - name: Brewfile syntax
+        run: ruby -c Brewfile
 
       - name: Run lint
         run: bash scripts/lint.sh

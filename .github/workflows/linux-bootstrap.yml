@@ -1,0 +1,69 @@
+# ------------------------------------------------------------------------------
+# Linux bootstrap — prove `bash setup.sh --yes` works on a clean Ubuntu and
+# Fedora: distro script → Homebrew + Brewfile → links → zsh/tmux/nvim → validate.
+# See docs/TESTING.md. Runs only when bootstrap inputs change (slow: full Brewfile).
+# ------------------------------------------------------------------------------
+# ubuntu: the runner itself (non-root user with passwordless sudo).
+# fedora: a fedora:latest container; Homebrew refuses root, so the job creates
+#         a sudo user and runs setup.sh as it.
+# validate.sh runs as a report (continue-on-error): CI has no login session, so
+# "login shell" / docker-group checks can't pass until a real re-login.
+# ------------------------------------------------------------------------------
+name: Linux bootstrap
+
+on:
+  pull_request:
+    paths:
+      - "setup.sh"
+      - "Brewfile"
+      - "scripts/linux/**"
+      - "scripts/validate.sh"
+      - "zsh/**"
+      - ".github/workflows/linux-bootstrap.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: linux-bootstrap-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bootstrap (setup.sh --yes --no-gui)
+        run: bash setup.sh --yes --no-gui
+
+      - name: Validate
+        continue-on-error: true
+        run: bash scripts/validate.sh
+
+      - name: Shell starts clean
+        run: zsh -ilc 'echo "zsh ok: $(command -v nvim) $(command -v bat) $(command -v fd)"; type pbcopy open'
+
+  fedora:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    container: fedora:latest
+    steps:
+      - name: Prerequisites + sudo user
+        run: |
+          dnf install -y -q git sudo
+          useradd -m -s /bin/bash dev
+          echo "dev ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/dev
+
+      - uses: actions/checkout@v4
+
+      - name: Bootstrap (setup.sh --yes --no-gui, as dev)
+        run: |
+          cp -r "$GITHUB_WORKSPACE" /home/dev/sys-config && chown -R dev:dev /home/dev/sys-config
+          sudo -iu dev bash -c 'cd ~/sys-config && bash setup.sh --yes --no-gui'
+
+      - name: Validate
+        continue-on-error: true
+        run: sudo -iu dev bash -c 'bash ~/sys-config/scripts/validate.sh'
+
+      - name: Shell starts clean
+        run: sudo -iu dev zsh -ilc 'echo "zsh ok: $(command -v nvim) $(command -v bat) $(command -v fd)"; type pbcopy open'

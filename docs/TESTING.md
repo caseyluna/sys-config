@@ -9,7 +9,9 @@ Two scripts; no unit tests (config is declarative — "does it parse/load?" and 
 
 | `python3 scripts/docs-check.py` | via `lint.sh` (warns locally, fails in CI) | every nvim `<leader>` key is in KEYS.md · every alias/function is in CHEATSHEET.md · exceptions in `docs/.docs-ignore` |
 
-CI: `.github/workflows/lint.yml` runs `lint.sh` on `ubuntu-latest` for pushes to `main`/`dev` and all PRs.
+CI: `.github/workflows/lint.yml` runs `lint.sh` (+ `ruby -c Brewfile`) on `ubuntu-latest` for pushes to `main`/`dev` and all PRs.
+
+**Linux bootstrap** (`.github/workflows/linux-bootstrap.yml`, on PRs touching `setup.sh`, `Brewfile`, `scripts/linux/`, `zsh/`): full `bash setup.sh --yes --no-gui` on an Ubuntu 24.04 runner and in a `fedora:latest` container (as a non-root sudo user), then `validate.sh` (report only — no real login session in CI) and an interactive `zsh -il` start that must succeed.
 
 | `python3 scripts/smoke.py [nvim\|tmux\|zsh]` | before commit (~15s); CI on config PRs | each tool starts for real with no errors · `.py .sh .sql .tf .lua .md` open cleanly and every installed LSP attaches · no two sources map the same nvim key, no `<Space>x` that's a prefix of `<Space>xy` · no plugin rebinds a tmux.conf key · battery placeholders resolved · zsh widgets (`^R` atuin, `^E` `^O` `^T`) live · no tmux `bind -n` key swallowing a zsh/nvim key · exceptions in `scripts/smoke/allow.txt` |
 

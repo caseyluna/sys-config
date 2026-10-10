@@ -1,6 +1,8 @@
 # sys-config — repo conventions for Claude
 
-Dotfiles that bootstrap a Mac: `setup.sh` (links + installs), `Brewfile`, `zsh/`, `tmux/`, `nvim/`, `claude/`, `docs/`.
+Dotfiles that bootstrap macOS, Fedora and Ubuntu identically: `setup.sh` (links + installs), `Brewfile`, `scripts/linux/`, `zsh/`, `tmux/`, `nvim/`, `claude/`, `docs/`.
+
+- **Cross-platform rule:** every config file is shared. Toolchain = `Brewfile` on all OSes (Homebrew on Linux); macOS-only entries go in `if OS.mac?` with a Linux twin in **both** `scripts/linux/fedora.sh` and `ubuntu.sh`. OS differences in shell config branch on `$OSTYPE` (`darwin*` / `linux*`); never call `pbcopy`/`open`/`dscl`/`osascript` without a Linux path.
 
 - **Layout rule:** one directory per tool; `setup.sh` `do_links()` is the single source of truth for what gets symlinked where. Update it and `docs/INSTALL.md` together.
 - **Neovim:** one plugin per file in `nvim/lua/cluna/plugins/`, each starting with the banner comment (what / keymaps / notes). Lazy-load via `keys`/`cmd`/`ft`. Servers in `lspconfig.lua` must match `mason.lua`. New `<leader>` prefixes get a group in `which-key.lua` and a row in `docs/KEYS.md`.

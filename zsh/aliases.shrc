@@ -9,6 +9,8 @@
 #   Sourced by .zshrc. Edit in repo (zsh/aliases.shrc); reload with `sz`.
 #   Note: the Oh My Zsh `git` plugin also defines g*, and OMZ core defines
 #   .., ... — the ones below are *our* choices and win when names collide.
+#   Same file on macOS and Linux; OS-specific variants branch on $OSTYPE.
+#   pbcopy/pbpaste/open work on Linux too (shims in functions.shrc).
 #
 # Location: ~/.aliases.shrc (symlinked from repo)
 # ------------------------------------------------------------------------------
@@ -28,8 +30,11 @@ alias cpwd='pwd | pbcopy'            # copy current dir to clipboard
 # ------------------------------------------------------------------------------
 # 📂 Files
 # ------------------------------------------------------------------------------
-alias ll='ls -lahG'
-alias la='ls -AG'
+# Colors: BSD ls (macOS) takes -G; GNU ls (Linux) reads -G as --no-group
+[[ $OSTYPE == darwin* ]] && _ls_color='-G' || _ls_color='--color=auto'
+alias ll="ls -lah $_ls_color"
+alias la="ls -A $_ls_color"
+unset _ls_color
 command -v bat &>/dev/null && alias cat='bat'
 alias dusort='du -sh * 2>/dev/null | sort -rh | head -20'   # biggest items here
 
@@ -151,9 +156,14 @@ alias ccr='claude --resume'
 # 🔍 System & network
 # ------------------------------------------------------------------------------
 alias ports='lsof -i -P -n | grep LISTEN'
-alias ip='curl -s ifconfig.me; echo'
-alias devip='ipconfig getifaddr en0'
-alias flushdns='sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder'
+alias ip='curl -s ifconfig.me; echo'   # public IP (Linux's own `ip`: `command ip a`)
+if [[ $OSTYPE == darwin* ]]; then
+  alias devip='ipconfig getifaddr en0'
+  alias flushdns='sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder'
+else
+  alias devip="command ip -4 route get 1.1.1.1 | awk '{for (i = 1; i < NF; i++) if (\$i == \"src\") print \$(i + 1)}'"
+  alias flushdns='resolvectl flush-caches'
+fi
 alias brewup='brew update && brew upgrade && brew cleanup && brew doctor'
 alias brewdiff='brew bundle cleanup --file="$SYS_CONFIG/Brewfile"'   # installed but not in Brewfile (dry run)
 
@@ -162,4 +172,4 @@ alias brewdiff='brew bundle cleanup --file="$SYS_CONFIG/Brewfile"'   # installed
 # ------------------------------------------------------------------------------
 alias db-proxy-prod='cloud-sql-proxy phil-new:us-east1:phil-db-prod-v2 --port 3306 --structured-logs'
 alias db-cli-prod='mycli -h 127.0.0.1 -P 3306 -u $PHIL_DB_PROD_ADMIN_USER -p $PHIL_DB_PROD_ADMIN_PASS'
-alias ppp='security find-generic-password -s com.phillies.onboarding.generate-ssh-key -w'
+alias ppp='security find-generic-password -s com.phillies.onboarding.generate-ssh-key -w'   # macOS keychain
