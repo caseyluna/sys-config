@@ -11,7 +11,14 @@ Two scripts; no unit tests (config is declarative — "does it parse/load?" and 
 
 CI: `.github/workflows/lint.yml` runs `lint.sh` (+ `ruby -c Brewfile`) on `ubuntu-latest` for pushes to `main`/`dev` and all PRs.
 
-**Linux bootstrap** (`.github/workflows/linux-bootstrap.yml`, on PRs touching `setup.sh`, `Brewfile`, `scripts/linux/`, `zsh/`): full `bash setup.sh --yes --no-gui` on an Ubuntu 24.04 runner and in a `fedora:latest` container (as a non-root sudo user), then `validate.sh` (report only — no real login session in CI) and an interactive `zsh -il` start that must succeed.
+**Linux bootstrap** (`.github/workflows/linux-bootstrap.yml`, on PRs touching `setup.sh`, `Brewfile`, `scripts/linux/`, `zsh/`, `tmux/`, `validate.sh`): `scripts/bootstrap-scope.sh` reads the diff and picks a mode (shown in the run summary):
+
+| Mode | When | What runs |
+|---|---|---|
+| **full** (~15 min) | `Brewfile`, `scripts/linux/**`, `setup.sh` install steps, the check itself · weekly (Mon 09:00 UTC, upstream drift) · `full-bootstrap` label · manual run | `bash setup.sh --yes --no-gui` on an Ubuntu 24.04 runner and in a `fedora:latest` container (non-root sudo user), `validate.sh` (report only — no real login session in CI), interactive `zsh -il` start |
+| **quick** (~2 min) | anything else in the paths above (zsh/tmux edits, link-table-only `setup.sh`) | links + Oh My Zsh + tmux plugins on Ubuntu without Homebrew; interactive zsh (real pty) must print nothing, tmux must start |
+
+Force the full install on a PR: add the `full-bootstrap` label. Preview the decision locally: `bash scripts/bootstrap-scope.sh origin/dev`.
 
 | `python3 scripts/smoke.py [nvim\|tmux\|zsh]` | before commit (~15s); CI on config PRs | each tool starts for real with no errors · `.py .sh .sql .tf .lua .md` open cleanly and every installed LSP attaches · no two sources map the same nvim key, no `<Space>x` that's a prefix of `<Space>xy` · no plugin rebinds a tmux.conf key · battery placeholders resolved · zsh widgets (`^R` atuin, `^E` `^O` `^T`) live · no tmux `bind -n` key swallowing a zsh/nvim key · exceptions in `scripts/smoke/allow.txt` |
 

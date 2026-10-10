@@ -124,4 +124,4 @@ cp -r /src /home/dev/sys-config && chown -R dev: /home/dev/sys-config
 su - dev -c 'cd ~/sys-config && bash setup.sh --yes --no-gui'
 ```
 
-CI does the same on every PR touching bootstrap files (`.github/workflows/linux-bootstrap.yml`).
+CI does the same when a PR touches install inputs (Brewfile, `scripts/linux/`, `setup.sh` install steps) and weekly; other bootstrap-file PRs get a quick links + zsh/tmux check (`.github/workflows/linux-bootstrap.yml`, see [TESTING.md](TESTING.md)).
