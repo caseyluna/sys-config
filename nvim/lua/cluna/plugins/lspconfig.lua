@@ -126,7 +126,7 @@ return {
 			jsonls = {},
 			taplo = {}, -- TOML
 			-- Data
-			sqlls = {},
+			sqls = {}, -- Go binary; sqlls (sql-language-server) crashes on Node 24
 			-- Docs / web
 			marksman = {}, -- Markdown
 			html = {},

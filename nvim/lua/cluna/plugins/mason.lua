@@ -33,7 +33,7 @@ return {
 				"yamlls",
 				"jsonls",
 				"taplo",
-				"sqlls",
+				"sqls",
 				"marksman",
 				"html",
 				"cssls",
