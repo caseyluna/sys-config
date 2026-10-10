@@ -33,6 +33,7 @@ First: `bash scripts/validate.sh`. It names the exact link or tool that's wrong.
 | No completion / LSP | `:LspInfo` (expect e.g. `pyright`, `ruff` on `.py`). `:Mason` — is the server installed? `<leader>rs` restarts |
 | Linter not showing | `:lua print(vim.inspect(require("lint").linters_by_ft[vim.bo.filetype]))`; the binary must be in Mason or on PATH (`mypy`, `shellcheck`, `sqlfluff`, `markdownlint`, `hadolint`, `yamllint`) |
 | Formatter not running | `:ConformInfo` names the formatter and whether it's found. Errors are shown (not silent) |
+| `<Tab>` and `<C-i>` act the same in nvim | Needs Ghostty + tmux `extended-keys` (CSI u): `tmux show -s extended-keys` → `on`; then `tmux kill-server` and restart |
 | Copilot not suggesting | `:Copilot status`; needs Node ≥ 22 (`fnm default lts-latest`) and `:Copilot auth` |
 | Treesitter highlight missing | `:TSInstall <lang>`; `:checkhealth nvim-treesitter` |
 | A key does nothing | `:map <lhs>` or `<leader>fk` (Telescope keymaps). Lazy-loaded plugins map keys as stubs — if the stub is missing the plugin file isn't being imported |
