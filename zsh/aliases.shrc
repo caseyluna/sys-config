@@ -20,12 +20,12 @@
 # ------------------------------------------------------------------------------
 alias c='clear'
 alias xx='exit'
-alias rsh='exec zsh'                 # restart shell
-alias sz='source ~/.zshrc'           # reload config
+alias rsh='exec zsh'       # restart shell
+alias sz='source ~/.zshrc' # reload config
 alias cdh='cd $HOME'
-alias cdc='cd "$SYS_CONFIG"'         # this repo
-alias path='print -l $path'          # one PATH entry per line
-alias cpwd='pwd | pbcopy'            # copy current dir to clipboard
+alias cdc='cd "$SYS_CONFIG"' # this repo
+alias path='print -l $path'  # one PATH entry per line
+alias cpwd='pwd | pbcopy'    # copy current dir to clipboard
 
 # ------------------------------------------------------------------------------
 # 📂 Files
@@ -36,7 +36,7 @@ alias ll="ls -lah $_ls_color"
 alias la="ls -A $_ls_color"
 unset _ls_color
 command -v bat &>/dev/null && alias cat='bat'
-alias dusort='du -sh * 2>/dev/null | sort -rh | head -20'   # biggest items here
+alias dusort='du -sh * 2>/dev/null | sort -rh | head -20' # biggest items here
 
 # ------------------------------------------------------------------------------
 # ✍️  Editor
@@ -47,8 +47,8 @@ alias vv='nvim'
 # ------------------------------------------------------------------------------
 # 🪟 tmux
 # ------------------------------------------------------------------------------
-alias dev='bash "$SYS_CONFIG/scripts/code-session.sh"'   # nvim + shell + claude layout
-alias ts='tmux-sessionizer'          # fuzzy project → session (also prefix+f)
+alias dev='bash "$SYS_CONFIG/scripts/code-session.sh"' # nvim + shell + claude layout
+alias ts='tmux-sessionizer'                            # fuzzy project → session (also prefix+f)
 alias tl='tmux ls'
 
 # ------------------------------------------------------------------------------
@@ -67,15 +67,16 @@ alias gd='git diff'
 alias gdc='git diff --cached'
 alias gl='git log --oneline'
 alias glg="git log --graph --all --pretty=format:'%C(yellow)%h%Creset %C(blue)%an%Creset %C(green)%ar%Creset %s%C(red)%d%Creset'"
-alias gstack='git log --oneline --graph main..HEAD'   # what's in this branch/stack
+alias gstack='git log --oneline --graph main..HEAD' # what's in this branch/stack
 alias gb='git branch'
 alias gco='git checkout'
-alias gm='git commit -m'
-alias gma='git commit -am'
+alias gcob='git checkout -b'
+alias gc='git commit -m'
+alias gca='git commit -am'
 alias gamend='git commit --amend --no-edit'
 alias gundo='git reset --soft HEAD~1'
 alias gp='git push'
-alias gpf='git push --force-with-lease'              # never bare --force
+alias gpf='git push --force-with-lease' # never bare --force
 alias gpu='git pull'
 alias gf='git fetch --prune'
 alias gcl='git clone'
@@ -100,10 +101,10 @@ alias uvs='uv sync'
 alias uva='uv add'
 alias uvr='uv run'
 alias uvp='uv pip install -r pyproject.toml'
-alias uvclean='uv pip uninstall -y -r <(uv pip freeze)'   # empty the current venv
+alias uvclean='uv pip uninstall -y -r <(uv pip freeze)' # empty the current venv
 alias vd='deactivate'
 alias pyt='pytest -x -q'
-alias pytl='pytest -x -q --lf'       # re-run last failures only
+alias pytl='pytest -x -q --lf' # re-run last failures only
 
 # ------------------------------------------------------------------------------
 # 🛠️ Terraform  (tf = project wrapper script, tf* = raw terraform)
@@ -156,7 +157,7 @@ alias ccr='claude --resume'
 # 🔍 System & network
 # ------------------------------------------------------------------------------
 alias ports='lsof -i -P -n | grep LISTEN'
-alias ip='curl -s ifconfig.me; echo'   # public IP (Linux's own `ip`: `command ip a`)
+alias ip='curl -s ifconfig.me; echo' # public IP (Linux's own `ip`: `command ip a`)
 if [[ $OSTYPE == darwin* ]]; then
   alias devip='ipconfig getifaddr en0'
   alias flushdns='sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder'
@@ -165,11 +166,11 @@ else
   alias flushdns='resolvectl flush-caches'
 fi
 alias brewup='brew update && brew upgrade && brew cleanup && brew doctor'
-alias brewdiff='brew bundle cleanup --file="$SYS_CONFIG/Brewfile"'   # installed but not in Brewfile (dry run)
+alias brewdiff='brew bundle cleanup --file="$SYS_CONFIG/Brewfile"' # installed but not in Brewfile (dry run)
 
 # ------------------------------------------------------------------------------
 # 🥞 Phillies DBs
 # ------------------------------------------------------------------------------
 alias db-proxy-prod='cloud-sql-proxy phil-new:us-east1:phil-db-prod-v2 --port 3306 --structured-logs'
 alias db-cli-prod='mycli -h 127.0.0.1 -P 3306 -u $PHIL_DB_PROD_ADMIN_USER -p $PHIL_DB_PROD_ADMIN_PASS'
-alias ppp='security find-generic-password -s com.phillies.onboarding.generate-ssh-key -w'   # macOS keychain
+alias ppp='security find-generic-password -s com.phillies.onboarding.generate-ssh-key -w' # macOS keychain

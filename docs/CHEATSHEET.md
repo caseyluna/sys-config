@@ -20,7 +20,7 @@ Neovim keys are in [KEYS.md](KEYS.md).
 
 **Editor / tmux** `vim` `vv`→nvim · `dev` nvim+shell+claude tmux layout · `ts` project session picker · `tl` tmux ls
 
-**Git** `g ga gst gd gdc gl glg gstack gb gco gm gma gamend gundo gp gpf gpu gf gcl gra grr gsync glom gwt` · `gcpr` create PR · `gprv` view PR · `gprs` PR status · `lg` lazygit · `ld` lazydocker
+**Git** `g ga gst gd gdc gl glg gstack gb gco gcob gc gca gamend gundo gp gpf gpu gf gcl gra grr gsync glom gwt` · `gcpr` create PR · `gprv` view PR · `gprs` PR status · `lg` lazygit · `ld` lazydocker
 
 **Python / uv** `python` `pip` → 3 · `uvv` venv+activate · `uvs` sync · `uva` add · `uvr` run · `uvp` install from pyproject · `uvclean` empty venv · `vd` deactivate · `pyt` pytest -x · `pytl` last failures
 
