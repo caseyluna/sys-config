@@ -15,13 +15,28 @@ On Linux, run as your normal user (not root) with `sudo` rights: Homebrew refuse
 
 ## Steps
 
+**One line** (new machine, nothing installed yet):
+
 ```bash
-git clone git@github.com:caseyluna/sys-config.git ~/sys-config   # any path works
+curl -fsSL https://raw.githubusercontent.com/caseyluna/sys-config/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/caseyluna/sys-config/main/install.sh | bash -s -- --yes --no-gui   # headless Linux server
+exec zsh
+task doctor
+```
+
+`install.sh` makes sure git exists (macOS: starts the Command Line Tools install and asks you to re-run; Linux: installs git with apt/dnf), clones over **HTTPS** to `~/sys-config` (or `$SYS_CONFIG`) — a new machine has no SSH key; pushes still go over SSH via `pushInsteadOf` in `.gitconfig` — then runs `setup.sh` with your flags. Re-running it pulls and re-runs setup.
+
+**Manually** (same result):
+
+```bash
+git clone https://github.com/caseyluna/sys-config.git ~/sys-config   # any path works
 cd ~/sys-config
 bash setup.sh
 exec zsh
-bash scripts/validate.sh
+task doctor
 ```
+
+After the first run, `task` exists — re-run setup with `task setup`, `task setup:config` (config only, no installs) or `task setup:server` (headless Linux).
 
 `setup.sh` runs these steps in order; every step is idempotent, so re-running is safe:
 

@@ -3,11 +3,12 @@
 Dotfiles + one-script bootstrap for the same dev environment on **macOS, Fedora and Ubuntu**: **zsh · tmux · Neovim · git · Ghostty · Claude Code**.
 
 ```bash
-git clone git@github.com:caseyluna/sys-config.git ~/sys-config
-cd ~/sys-config && bash setup.sh      # (Linux: distro pkgs) Homebrew, Brewfile, symlinks, OMZ, TPM, pyenv, fnm, nvim, Claude
+curl -fsSL https://raw.githubusercontent.com/caseyluna/sys-config/main/install.sh | bash   # clone → setup.sh: (Linux: distro pkgs) Homebrew, Brewfile, symlinks, OMZ, TPM, pyenv, fnm, nvim, Claude
 exec zsh
-bash scripts/validate.sh              # everything green?
+task doctor                           # everything green?
 ```
+
+Headless Linux server: `curl -fsSL …/install.sh | bash -s -- --yes --no-gui`. Already cloned? `bash setup.sh` (or `task setup`).
 
 | I want to… | Go to |
 |---|---|

@@ -80,20 +80,6 @@ tasks:
     cmds:
       - bash "{{.REPO}}/setup.sh" --yes --no-gui {{.CLI_ARGS}}
 
-  setup:fresh:
-    desc: Print the first-run steps for a new machine (task isn't installed until setup.sh runs)
-    silent: true
-    cmds:
-      - |
-        cat <<'STEPS'
-        New machine:
-          1. git clone https://github.com/caseyluna/sys-config ~/sys-config
-          2. bash ~/sys-config/setup.sh            # Linux server: add --yes --no-gui
-          3. exec zsh                              # load the new shell config
-          4. task doctor                           # verify links, tools, smoke, Brewfile
-        Details: docs/INSTALL.md
-        STEPS
-
   links:
     desc: Re-create symlinks only
     cmds:
