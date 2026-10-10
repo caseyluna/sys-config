@@ -41,7 +41,8 @@ jobs:
         run: bash scripts/validate.sh
 
       - name: Shell starts clean
-        run: zsh -ilc 'echo "zsh ok: $(command -v nvim) $(command -v bat) $(command -v fd)"; type pbcopy open'
+        run: |
+          zsh -ilc 'echo "zsh ok: $(command -v nvim) $(command -v bat) $(command -v fd)"; type pbcopy open'
 
   fedora:
     runs-on: ubuntu-24.04
@@ -66,4 +67,5 @@ jobs:
         run: sudo -iu dev bash -c 'bash ~/sys-config/scripts/validate.sh'
 
       - name: Shell starts clean
-        run: sudo -iu dev zsh -ilc 'echo "zsh ok: $(command -v nvim) $(command -v bat) $(command -v fd)"; type pbcopy open'
+        run: |
+          sudo -iu dev zsh -ilc 'echo "zsh ok: $(command -v nvim) $(command -v bat) $(command -v fd)"; type pbcopy open'
