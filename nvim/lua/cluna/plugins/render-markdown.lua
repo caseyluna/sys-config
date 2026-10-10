@@ -41,7 +41,7 @@ return {
 		code = {
 			enabled = true,
 			sign = false,
-			style = "full",    -- "full" = language label + background on whole block
+			style = "full", -- "full" = language label + background on whole block
 			border = "thin",
 			above = "▄",
 			below = "▀",
@@ -58,7 +58,7 @@ return {
 		checkbox = {
 			enabled = true,
 			unchecked = { icon = "󰄱 " },
-			checked   = { icon = "󰱒 " },
+			checked = { icon = "󰱒 " },
 		},
 
 		-- Tables: pad columns, add border characters

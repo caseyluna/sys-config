@@ -6,9 +6,9 @@
 --   applied per-match, per-file, or all at once. Supports regex and plain text,
 --   case sensitivity, and file-type filters.
 -- Keymaps:
---   <leader>S   — open Spectre (project-wide search)
---   <leader>sw  — search current word across project
---   <leader>sf  — search in current file only
+--   <leader>SS  — open Spectre (project-wide search)
+--   <leader>Sw  — search current word across project
+--   <leader>Sf  — search in current file only
 -- Notes: Requires ripgrep (rg) and sed/oxi-replace for substitutions.
 --   Both are available via Homebrew and declared in Brewfile.
 -- ------------------------------------------------------------------------------
@@ -18,17 +18,43 @@ return {
 	dependencies = { "nvim-lua/plenary.nvim" },
 	cmd = "Spectre",
 	keys = {
-		{ "<leader>S",  function() require("spectre").toggle() end,                                    desc = "Spectre: project-wide find/replace" },
-		{ "<leader>sw", function() require("spectre").open_visual({ select_word = true }) end,         desc = "Spectre: search current word", mode = { "n" } },
-		{ "<leader>sw", function() require("spectre").open_visual() end,                               desc = "Spectre: search selection",   mode = { "v" } },
-		{ "<leader>sf", function() require("spectre").open_file_search({ select_word = true }) end,    desc = "Spectre: search in file" },
+		{
+			"<leader>SS",
+			function()
+				require("spectre").toggle()
+			end,
+			desc = "Spectre: project-wide find/replace",
+		},
+		{
+			"<leader>Sw",
+			function()
+				require("spectre").open_visual({ select_word = true })
+			end,
+			desc = "Spectre: search current word",
+			mode = { "n" },
+		},
+		{
+			"<leader>Sw",
+			function()
+				require("spectre").open_visual()
+			end,
+			desc = "Spectre: search selection",
+			mode = { "v" },
+		},
+		{
+			"<leader>Sf",
+			function()
+				require("spectre").open_file_search({ select_word = true })
+			end,
+			desc = "Spectre: search in file",
+		},
 	},
 	opts = {
 		open_cmd = "noswapfile vnew",
-		live_update = false,  -- manual refresh to avoid hammering rg on large repos
+		live_update = false, -- manual refresh to avoid hammering rg on large repos
 		highlight = {
-			ui      = "String",
-			search  = "DiffChange",
+			ui = "String",
+			search = "DiffChange",
 			replace = "DiffDelete",
 		},
 	},

@@ -1,28 +1,48 @@
 # ------------------------------------------------------------------------------
-# .zprofile — Login shell environment
+# .zprofile — Login-shell environment (PATH + env vars), loaded ONCE per login
 # ------------------------------------------------------------------------------
 # What it does:
-#   Loaded once for login shells and for GUI apps (e.g. VS Code, Spotlight).
-#   Sets Homebrew path, pyenv shims, EDITOR/VISUAL, and optional $HOME/bin.
-#   For interactive-only settings (prompt, aliases, keybindings) see .zshrc.
+#   Builds PATH exactly once (deduplicated) and exports the env vars every
+#   program needs: Homebrew, pyenv shims, user bins, EDITOR. GUI apps and tmux
+#   panes (login shells) get this too. Interactive-only things (prompt, aliases,
+#   keybindings, completions) live in .zshrc.
 #
-# How to interact: Edit in repo (zsh/.zprofile). Symlink: ~/.zprofile → repo.
-#   Changes apply on next login or when GUI apps are restarted.
+# How to interact:
+#   Edit in repo (zsh/.zprofile); ~/.zprofile is a symlink. Applies to new
+#   login shells / after re-login. Add new PATH entries to the `path=(...)`
+#   block — never `export PATH=...:$PATH` elsewhere.
 #
-# Author: Casey A. Thayer
 # Location: ~/.zprofile (symlinked from repo)
 # ------------------------------------------------------------------------------
 
-# 🍺 Homebrew path setup (Apple Silicon, macOS)
-eval "$(/opt/homebrew/bin/brew shellenv)"
+# Repo root, resolved from this file's real path (works wherever the repo lives)
+export SYS_CONFIG="${${(%):-%x}:A:h:h}"
 
-# 🐍 pyenv setup for GUI apps (e.g., VS Code launched via Spotlight)
+# PATH as a deduplicated array: later `path+=` / `path=(x $path)` never add dupes
+typeset -U path PATH
+
+# Homebrew (Apple Silicon, Intel, Linuxbrew) — sets HOMEBREW_PREFIX and PATH
+for _brew in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+  if [[ -x "$_brew" ]]; then
+    eval "$("$_brew" shellenv)"
+    break
+  fi
+done
+unset _brew
+
+# pyenv shims (interactive init is in .zshrc)
 export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/shims:$PATH"
 
-# ✍️ Default editor (optional)
+path=(
+  "$PYENV_ROOT/shims"
+  "$HOME/.local/bin"
+  "$HOME/bin"
+  $path
+)
+
+# Editor
 export EDITOR="nvim"
 export VISUAL="nvim"
 
-# 📦 Add user bin path (optional)
-export PATH="$HOME/bin:$PATH"
+# Python builds against Homebrew's OpenSSL (pyenv install)
+export PYTHON_BUILD_HOMEBREW_OPENSSL_FORMULA=openssl@3

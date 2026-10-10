@@ -1,100 +1,115 @@
 # ------------------------------------------------------------------------------
-# aliases.shrc — Shell aliases (git, docker, k8s, file ops, etc.)
+# aliases.shrc — Shell aliases
 # ------------------------------------------------------------------------------
 # What it does:
-#   Defines short aliases for common commands: g/gst/gd (git), dkps/dkl (docker),
-#   kgp/kubectl (k8s), ls/ll/cat (eza/bat), lg (lazygit), and navigation (c, sz, cdh).
+#   Short names for everyday commands, grouped by tool. Anything that needs
+#   arguments or logic is a function in functions.shrc instead.
 #
 # How to interact:
-#   Sourced from .zshrc at startup. Edit this file in repo (zsh/aliases.shrc);
-#   reload with: source ~/.zshrc (or open a new terminal).
+#   Sourced by .zshrc. Edit in repo (zsh/aliases.shrc); reload with `sz`.
+#   Note: the Oh My Zsh `git` plugin also defines g*, and OMZ core defines
+#   .., ... — the ones below are *our* choices and win when names collide.
 #
-# Author: Casey A. Thayer
 # Location: ~/.aliases.shrc (symlinked from repo)
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
-# 🐍 Python & Virtual Envs
+# 💻 Shell & navigation
 # ------------------------------------------------------------------------------
-alias python=python3
-alias pip=pip3
-
-# ------------------------------------------------------------------------------
-# ✍️  Editor (EDITOR set in .zprofile for GUI/commit messages; here only aliases)
-# ------------------------------------------------------------------------------
-alias vim=nvim
-alias vv=nvim
-
-# ------------------------------------------------------------------------------
-# 🪟 Dev session (Ghostty + tmux: Neovim + terminal + right pane) — opt-in via dev
-# ------------------------------------------------------------------------------
-# Run when you want this layout:  dev   → tmux session with nvim (main), shell (bottom 25%), right pane.
-# To adjust: set CODE_BOTTOM_PCT, CODE_RIGHT_PCT, CODE_RIGHT_CMD (see scripts/code-session.sh).
-# Repo path: defaults to ~/sys-config, then ~/ct/sys-config; or set SYS_CONFIG_REPO.
-if [[ -z "${SYS_CONFIG_REPO-}" ]]; then
-  if [[ -f "$HOME/sys-config/scripts/code-session.sh" ]]; then
-    SYS_CONFIG_REPO="$HOME/sys-config"
-  else
-    SYS_CONFIG_REPO="$HOME/ct/sys-config"
-  fi
-fi
-alias dev='bash "${SYS_CONFIG_REPO}/scripts/code-session.sh"'
-
-# ------------------------------------------------------------------------------
-# 💻 Shell & Navigation
-# ------------------------------------------------------------------------------
-alias ...='cd ../..'
-alias c=clear
+alias c='clear'
 alias xx='exit'
-alias rsh='exec $SHELL'
-alias sz='source ~/.zshrc'
-
+alias rsh='exec zsh'                 # restart shell
+alias sz='source ~/.zshrc'           # reload config
 alias cdh='cd $HOME'
-alias cdm='cd $HOME/ct'
-alias cdc='cd $HOME/ct/sys-config'
-alias pie='cd $HOME/phillies/pie'
-alias terraform='cd $HOME/phillies/terraform'
+alias cdc='cd "$SYS_CONFIG"'         # this repo
+alias path='print -l $path'          # one PATH entry per line
+alias cpwd='pwd | pbcopy'            # copy current dir to clipboard
 
 # ------------------------------------------------------------------------------
-# 📂 File Listing
+# 📂 Files
 # ------------------------------------------------------------------------------
-alias ls='eza -l --icons'
-alias ll='eza -l -a --icons'
-alias cat='bat'
+alias ll='ls -lahG'
+alias la='ls -AG'
+command -v bat &>/dev/null && alias cat='bat'
+alias dusort='du -sh * 2>/dev/null | sort -rh | head -20'   # biggest items here
 
 # ------------------------------------------------------------------------------
-# 🔐 Direnv
+# ✍️  Editor
+# ------------------------------------------------------------------------------
+alias vim='nvim'
+alias vv='nvim'
+
+# ------------------------------------------------------------------------------
+# 🪟 tmux
+# ------------------------------------------------------------------------------
+alias dev='bash "$SYS_CONFIG/scripts/code-session.sh"'   # nvim + shell + claude layout
+alias ts='tmux-sessionizer'          # fuzzy project → session (also prefix+f)
+alias tl='tmux ls'
+
+# ------------------------------------------------------------------------------
+# 🔐 direnv
 # ------------------------------------------------------------------------------
 alias da='direnv allow'
 alias dr='direnv reload'
 
 # ------------------------------------------------------------------------------
-# 🔧 Git
+# 🔧 Git & GitHub
 # ------------------------------------------------------------------------------
 alias g='git'
 alias ga='git add'
-alias gc='git commit -m'
-alias gp='git push'
-alias gl='git log --oneline'
 alias gst='git status'
 alias gd='git diff'
 alias gdc='git diff --cached'
-alias gm='git commit -m'
-alias gma='git commit -am'
+alias gl='git log --oneline'
+alias glg="git log --graph --all --pretty=format:'%C(yellow)%h%Creset %C(blue)%an%Creset %C(green)%ar%Creset %s%C(red)%d%Creset'"
+alias gstack='git log --oneline --graph main..HEAD'   # what's in this branch/stack
 alias gb='git branch'
 alias gco='git checkout'
+alias gm='git commit -m'
+alias gma='git commit -am'
+alias gamend='git commit --amend --no-edit'
+alias gundo='git reset --soft HEAD~1'
+alias gp='git push'
+alias gpf='git push --force-with-lease'              # never bare --force
+alias gpu='git pull'
+alias gf='git fetch --prune'
+alias gcl='git clone'
 alias gra='git remote add'
 alias grr='git remote rm'
-alias gpu='git pull'
-alias gf='git fetch'
-alias gcl='git clone'
-alias gcpr="gh pr create -w"
-alias gsync="git checkout main && git pull --rebase && git fetch --prune"
-alias glom="git pull origin main"
-alias lg=lazygit
-alias ld=lazydocker       # TUI for docker containers, logs, and images
-alias ts=tmux-sessionizer # fuzzy-jump to project dir / create tmux session
-alias ppp='security find-generic-password -s com.phillies.onboarding.generate-ssh-key -w'
+alias gsync='git checkout main && git pull --rebase && git fetch --prune'
+alias glom='git pull origin main'
+alias gwt='git worktree list'
+alias gcpr='gh pr create -w'
+alias gprv='gh pr view -w'
+alias gprs='gh pr status'
+alias lg='lazygit'
+alias ld='lazydocker'
+
+# ------------------------------------------------------------------------------
+# 🐍 Python & uv
+# ------------------------------------------------------------------------------
+alias python='python3'
+alias pip='pip3'
+alias uvv='uv venv && source .venv/bin/activate'
+alias uvs='uv sync'
+alias uva='uv add'
+alias uvr='uv run'
+alias uvp='uv pip install -r pyproject.toml'
+alias uvclean='uv pip uninstall -y -r <(uv pip freeze)'   # empty the current venv
+alias vd='deactivate'
+alias pyt='pytest -x -q'
+alias pytl='pytest -x -q --lf'       # re-run last failures only
+
+# ------------------------------------------------------------------------------
+# 🛠️ Terraform  (tf = project wrapper script, tf* = raw terraform)
+# ------------------------------------------------------------------------------
+alias tf='./terraform.sh'
+alias tfi='terraform init'
+alias tfp='terraform plan'
+alias tfa='terraform apply'
+alias tfd='terraform destroy'
+alias tff='terraform fmt -recursive'
+alias tfv='terraform validate'
 
 # ------------------------------------------------------------------------------
 # 🐳 Docker
@@ -106,17 +121,15 @@ alias dkst='docker stats'
 alias dkl='docker logs -f'
 alias dke='docker exec -it'
 alias dkclean='docker rm $(docker ps -aq)'
-alias dk-up='docker-compose up -d'
-alias dk-down='docker-compose down'
-alias dk-start='docker-compose start'
-alias dk-stop='docker-compose stop'
+alias dk-up='docker compose up -d'
+alias dk-down='docker compose down'
+alias dk-start='docker compose start'
+alias dk-stop='docker compose stop'
 alias dk-clean='docker system prune -a --volumes'
 
 # ------------------------------------------------------------------------------
-# ☸️ Kubernetes (functions used for args)
+# ☸️ Kubernetes
 # ------------------------------------------------------------------------------
-ka() { kubectl apply -f "$1"; }
-kdj() { kubectl delete job "$1"; }
 alias kgp='kubectl get pods'
 alias kgj='kubectl get jobs'
 alias kjr='kubectl get jobs | grep Running'
@@ -126,27 +139,27 @@ alias kjf='kubectl get jobs | grep Failed'
 # 📊 R
 # ------------------------------------------------------------------------------
 alias R='R --no-restore-data --no-save'
-alias r='radian'
 
 # ------------------------------------------------------------------------------
-# 🦆 DuckDB
+# 🤖 Claude Code
 # ------------------------------------------------------------------------------
-alias duckdb='/Applications/duckdb'
+alias cc='claude'
+alias ccc='claude --continue'
+alias ccr='claude --resume'
 
 # ------------------------------------------------------------------------------
-# 🛠️ Terraform
-# ------------------------------------------------------------------------------
-alias tf='./terraform.sh'
-
-# ------------------------------------------------------------------------------
-# 🔍 System & Network
+# 🔍 System & network
 # ------------------------------------------------------------------------------
 alias ports='lsof -i -P -n | grep LISTEN'
-alias ip='curl ifconfig.me'
+alias ip='curl -s ifconfig.me; echo'
 alias devip='ipconfig getifaddr en0'
+alias flushdns='sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder'
+alias brewup='brew update && brew upgrade && brew cleanup && brew doctor'
+alias brewdiff='brew bundle cleanup --file="$SYS_CONFIG/Brewfile"'   # installed but not in Brewfile (dry run)
 
 # ------------------------------------------------------------------------------
 # 🥞 Phillies DBs
 # ------------------------------------------------------------------------------
 alias db-proxy-prod='cloud-sql-proxy phil-new:us-east1:phil-db-prod-v2 --port 3306 --structured-logs'
 alias db-cli-prod='mycli -h 127.0.0.1 -P 3306 -u $PHIL_DB_PROD_ADMIN_USER -p $PHIL_DB_PROD_ADMIN_PASS'
+alias ppp='security find-generic-password -s com.phillies.onboarding.generate-ssh-key -w'

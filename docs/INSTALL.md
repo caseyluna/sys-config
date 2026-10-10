@@ -1,139 +1,86 @@
-# sys-config: Install Guide
+# Install
 
-**Goal:** Clone this repo and run one script to get a working shell, tmux, Neovim, and git config on a new machine.
-
-**See also:** [docs/INDEX.md](INDEX.md) for all documentation; [docs/DEBUG.md](DEBUG.md) for troubleshooting.
-
----
-
-## Overview
-
-| Step | Action |
-|------|--------|
-| 1 | Clone repo (any path; script detects location or use `REPO=…`). |
-| 2 | Run `bash setup.sh` — installs Homebrew, Brewfile, symlinks, Oh My Zsh, fzf, TPM, optional pyenv. |
-| 3 | Restart shell: `exec $SHELL`. |
-| 4 | In tmux: **prefix + I** to install tmux plugins (prefix is Ctrl-A). |
-| 5 | Neovim: on first run, lazy.nvim installs plugins automatically. |
-
----
+**Goal:** clone → `bash setup.sh` → working shell, tmux, Neovim, git, Ghostty and Claude Code.
 
 ## Prerequisites
 
-- **macOS or Linux** (setup script is written for both; Homebrew is optional on Linux)
-- **Git** and **curl** (to clone and fetch installers)
-- **Zsh** (install via your package manager if missing; setup assumes zsh as default shell)
+- macOS (Apple Silicon). Xcode Command Line Tools: `xcode-select --install` (setup checks and refuses to continue without them — treesitter/fzf-native need a C compiler).
+- `git`, `curl`, `zsh` (all ship with macOS).
 
-On macOS, the Xcode Command Line Tools are usually enough for git/curl. Install with:
+## Steps
 
 ```bash
-xcode-select --install
+git clone git@github.com:caseyluna/sys-config.git ~/sys-config   # any path works
+cd ~/sys-config
+bash setup.sh
+exec zsh
+bash scripts/validate.sh
 ```
 
----
+`setup.sh` runs these steps in order; every step is idempotent, so re-running is safe:
 
-## Quick install
+| # | Step | What happens |
+|---|---|---|
+| 1 | preflight | git/curl/zsh present, Xcode CLT installed |
+| 2 | brew | install Homebrew if missing; `brew bundle --no-upgrade --file=Brewfile` |
+| 3 | links | symlinks below; real files are moved to `<file>.bak.<timestamp>` first |
+| 4 | zsh | Oh My Zsh (`KEEP_ZSHRC=yes`), custom plugins fzf-tab / autosuggestions / fast-syntax-highlighting |
+| 5 | tmux | clone TPM into `~/.tmux/plugins`, install every plugin in `.tmux.conf` |
+| 6 | python | pyenv: install latest 3.13 and set it global |
+| 7 | node | fnm: install LTS and set default (Mason's npm servers need it) |
+| 8 | nvim | headless `Lazy! sync` + `MasonToolsInstallSync` — plugins, LSPs, formatters ready before first launch |
+| 9 | claude | register the Linear MCP server at user scope |
+| 10 | shell | `chsh -s $(command -v zsh)` (asks; `--yes` skips the prompt) |
 
-1. **Clone the repo** (use any path you like; the script detects its own location):
+Flags: `--links-only` (step 3 only), `--no-brew`, `--no-nvim`, `--yes`. `REPO=/path bash setup.sh` if running from outside the clone.
 
-   ```bash
-   git clone <your-repo-url> ~/sys-config
-   cd ~/sys-config
-   ```
-
-   If you use a different path (e.g. `~/.config/dotfiles`), you can set `REPO` when running setup:
-
-   ```bash
-   REPO=~/.config/dotfiles bash setup.sh
-   ```
-
-2. **Run the setup script:**
-
-   ```bash
-   bash setup.sh
-   ```
-
-   The script will:
-
-   - Install Homebrew (if missing)
-   - Run `brew bundle` from the repo’s Brewfile
-   - Back up existing dotfiles to `~/.dotfiles-backup.YYYYMMDD` if they exist
-   - Create symlinks from your home directory to the repo (e.g. `~/.zshrc` → repo)
-   - Install Powerline fonts (optional), Oh My Zsh (with `KEEP_ZSHRC=yes`), fzf shell integration, TPM, and pyenv + Python 3.13 (optional)
-
-3. **Restart your shell** (or open a new terminal):
-
-   ```bash
-   exec $SHELL
-   ```
-
-4. **Tmux plugins:** The first time you start tmux, press **prefix + I** (capital I) to install plugins. Prefix is **Ctrl-A**. If the script ran TPM’s `install_plugins`, they may already be installed.
-
-5. **Neovim:** On first run, Neovim will pull lazy.nvim and all plugins. Optional: create a Python venv for the Python provider:
-
-   ```bash
-   python3 -m venv ~/.venvs/global
-   ~/.venvs/global/bin/pip install neovim
-   ```
-
----
+Sign-ins that can't be scripted: `gh auth login`, `claude` (first run), `:Copilot auth` in Neovim, `atuin login` (optional sync), `gcloud auth login`.
 
 ## What gets symlinked
 
-| Symlink | Points to |
-|--------|------------|
-| `~/.zshrc` | `repo/zsh/.zshrc` |
-| `~/.zprofile` | `repo/zsh/.zprofile` |
-| `~/.aliases.shrc` | `repo/zsh/aliases.shrc` |
-| `~/.functions.shrc` | `repo/zsh/functions.shrc` |
-| `~/.tmux.conf` | `repo/tmux/.tmux.conf` |
-| `~/.fzf` | `repo/fzf/.fzf` (so `~/.fzf/key-bindings.zsh` works) |
-| `~/.gitconfig` | `repo/git-configs/.gitconfig` |
-| `~/.gitignore_global` | `repo/git-configs/.gitignore_global` |
-| `~/.config/nvim` | `repo/nvim` |
-| `~/.config/starship.toml` | `repo/starship/starship.toml` |
-| `~/.config/kitty` | `repo/kitty` |
-| `~/.p10k.zsh` | `repo/powerline/.p10k.zsh` (optional; p10k is commented out in .zshrc) |
+Source of truth: `do_links()` in `setup.sh`. Keep this table identical.
 
----
+| Link | → Repo file |
+|---|---|
+| `~/.zshrc` | `zsh/.zshrc` |
+| `~/.zprofile` | `zsh/.zprofile` |
+| `~/.aliases.shrc` | `zsh/aliases.shrc` |
+| `~/.functions.shrc` | `zsh/functions.shrc` |
+| `~/.tmux.conf` | `tmux/.tmux.conf` |
+| `~/.gitconfig` | `git-configs/.gitconfig` |
+| `~/.gitignore_global` | `git-configs/.gitignore_global` |
+| `~/.config/nvim` | `nvim/` |
+| `~/.config/starship.toml` | `starship/starship.toml` |
+| `~/.config/ghostty` | `ghostty/` |
+| `~/.local/bin/tmux-sessionizer` | `scripts/tmux-sessionizer` |
+| `~/.claude/settings.json` | `claude/settings.json` |
+| `~/.claude/CLAUDE.md` | `claude/CLAUDE.md` |
+| `~/.claude/keybindings.json` | `claude/keybindings.json` |
+| `~/.claude/statusline.sh` | `claude/statusline.sh` |
+| `~/.claude/hooks` | `claude/hooks/` |
+| `~/.claude/skills` | `claude/skills/` |
+| `~/.claude/agents` | `claude/agents/` |
 
-## Verification (after install)
+Deliberately **not** linked: `~/.tmux` (plugin state), `~/.claude` as a whole (sessions, history, auth), `~/.claude.json`, `~/.fzf` (fzf's own `fzf --zsh` is sourced instead). Stale links from older versions (`~/.zshprofile`, `~/.p10k.zsh`, `~/.fzf`, `~/.config/kitty`) are removed automatically.
 
-Run these to confirm things are wired correctly:
+## Verify
 
-```bash
-# Shell and prompt
-echo $SHELL
-type starship
-[[ -f ~/.config/starship.toml ]] && echo "starship config linked"
-
-# FZF (key bindings from repo)
-[[ -f ~/.fzf/key-bindings.zsh ]] && echo "fzf key-bindings present"
-
-# Symlinks (should point into your repo)
-ls -la ~/.zshrc ~/.zprofile ~/.tmux.conf ~/.config/nvim ~/.fzf ~/.config/starship.toml
-
-# Git
-git config --global core.pager
-# Should show: delta
-```
-
-**Neovim:**
+`bash scripts/validate.sh` checks every link above, required tools, that `bat`/`delta` run (dyld sanity), git config, tmux plugins, and runs a headless Neovim checkhealth. Manual spot checks:
 
 ```bash
-nvim --headless +"checkhealth" +qa 2>&1 | head -60
-nvim --startuptime /tmp/nvim-startup.log +qa && tail -5 /tmp/nvim-startup.log
+print -l $path | sort | uniq -d        # should print nothing (no PATH dupes)
+bindkey | grep '"\^R"'                  # atuin-search
+tmux new -d -s t && tmux show -g history-limit && tmux kill-session -t t   # 50000
+nvim --headless "+checkhealth vim.lsp" "+w! /tmp/h.txt" +qa && grep -c ERROR /tmp/h.txt   # 0
 ```
 
-**Tmux:** Start tmux, create a pane (prefix + `|` or `-`), then press prefix + h/j/k/l to move. Press prefix + I if plugins aren’t installed yet.
+## Clean-room test
 
----
+Without touching your real home:
 
-## Clean-room testing (optional)
+```bash
+HOME=/tmp/sc-home bash setup.sh --links-only
+HOME=/tmp/sc-home bash scripts/validate.sh
+```
 
-To simulate a fresh machine without touching your real home directory:
-
-- **New macOS user:** Create a second user account, clone the repo there, and run `setup.sh`.
-- **Temporary HOME:** Run with a fake home (script uses `$REPO` from its path; you’d need to set `HOME` and possibly adjust script to not rely on `$HOME` for critical tools, or use a VM).
-
-See **docs/DEBUG.md** for troubleshooting and more validation steps.
+For a full run, use a second macOS user account (System Settings → Users), clone there, and run `bash setup.sh --yes`.

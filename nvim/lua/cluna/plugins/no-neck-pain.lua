@@ -9,7 +9,7 @@
 
 return {
 	"shortcuts/no-neck-pain.nvim",
-	event = "BufReadPre",
+	cmd = "NoNeckPain",
 	keys = {
 		{ "<leader>z", "<cmd>NoNeckPain<CR>", desc = "Toggle NoNeckPain (center buffer)" },
 	},

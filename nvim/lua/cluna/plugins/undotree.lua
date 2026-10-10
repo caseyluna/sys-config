@@ -9,7 +9,7 @@
 
 return {
 	"mbbill/undotree",
-	event = "BufReadPre",
+	cmd = "UndotreeToggle",
 	keys = {
 		{ "<leader>uu", "<cmd>UndotreeToggle<CR>", desc = "Undotree: toggle" },
 	},

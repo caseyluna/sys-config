@@ -1,182 +1,142 @@
-# Keys — Task-Oriented Keybinding Reference
+# Neovim keys
 
-Task-first quick reference. Find what you want to do, get the exact keys. For full context on any workflow see [WORKFLOWS.md](WORKFLOWS.md); for a complete keybinding list by tool see [CHEATSHEET.md](CHEATSHEET.md).
+Leader is `<Space>`. Press `<Space>` and pause — which-key lists every group. `<Space>?` shows buffer-local keys, `<Space>fk` searches all keymaps. Source of truth: each file in `nvim/lua/cluna/plugins/` (banner comment) and `nvim/lua/cluna/core/keymaps.lua`.
 
----
+## Groups at a glance
+
+| Prefix | Group | Prefix | Group |
+|---|---|---|---|
+| `<Space>a` | harpoon | `<Space>q` | session |
+| `<Space>b` | buffer | `<Space>r` | rename / outline |
+| `<Space>c` | Claude | `<Space>s` | splits |
+| `<Space>d` | debug | `<Space>S` | search & replace |
+| `<Space>e` | explorer | `<Space>t` | tabs / terminal |
+| `<Space>f` | find | `<Space>T` | tests |
+| `<Space>g` | git | `<Space>u` | ui / undo |
+| `<Space>h` | hunks | `<Space>x` | trouble |
+| `<Space>l` | lazygit | `<Space>i` `<Space>p` | octo issue / PR (in octo buffers) |
+| `<Space>m` | format / lint | `[` `]` | prev / next |
 
 ## Navigation
 
-| I want to… | Keys |
-|------------|------|
-| Open a file by name | `<Space>ff` → type → Enter |
-| Search for text across the project | `<Space>fs` → type → Enter |
-| Search for the word under my cursor | `<Space>fc` |
-| Jump to a recent file | `<Space>fr` |
-| Jump to a function/class by name | `<Space>rA` |
-| Go to definition | `gd` |
-| Go to type definition | `gt` |
-| See all references to a symbol | `gR` |
-| Read hover docs for something | `K` |
-| Jump to a visible spot on screen | `<Space>j` → type label |
-| Jump between my 4 pinned files | `<Space>1` `<Space>2` `<Space>3` `<Space>4` |
-| Pin the current file to harpoon | `<Space>a` |
-| Open the file tree | `<Space>ee` |
-| Rename/move/delete files in-place | `<Space>o` (Oil) |
-
----
+| I want to… | Keys | Plugin |
+|---|---|---|
+| Open a file by name | `<Space>ff` | telescope |
+| Recent files / open buffers | `<Space>fr` / `<Space>fb` | telescope |
+| Grep the project / word under cursor | `<Space>fs` / `<Space>fc` | telescope |
+| Files changed in git | `<Space>fg` | telescope |
+| Switch project | `<Space>fp` | telescope-project |
+| Help / keymaps | `<Space>fh` / `<Space>fk` | telescope |
+| Go to definition / implementation / type / references | `gd` `gi` `gt` `gR` | lsp |
+| Hover docs | `K` | lsp |
+| Symbol outline sidebar / fuzzy symbol search | `<Space>ra` / `<Space>rA` | aerial |
+| Jump to any visible spot | `<Space>j` then label | flash |
+| Pin file / open pins / jump to pin 1-4 | `<Space>aa` / `<Space>am` / `<Space>1..4` | harpoon |
+| File tree (float) / git status tree / buffer tree | `<Space>ee` / `<Space>eg` / `<Space>bf` | neo-tree |
+| Edit a directory like a buffer | `<Space>o` (`-` = up) | oil |
+| Next / prev buffer | `]b` / `[b` | bufferline |
+| Close buffer (keep layout) / close others / pin | `<Space>bd` / `<Space>bo` / `<Space>bp` | snacks, bufferline |
+| Move between splits **and tmux panes** | `Ctrl-h/j/k/l` | nvim-tmux-navigation |
+| Next / prev function, class | `]f` `[f` `]c` `[c` | treesitter-textobjects |
+| Expand / shrink selection by syntax | `Ctrl-Space` / `Backspace` (visual) | treesitter |
+| Jumplist back / forward | `Ctrl-o` / `Ctrl-i` | vim |
 
 ## Editing
 
-| I want to… | Keys |
-|------------|------|
-| Find and replace across the project | `<Space>S` |
-| Find and replace only in this file | `<Space>sf` |
-| Search for word under cursor + replace | `<Space>sw` → edit in Spectre |
-| Rename a symbol everywhere (LSP) | `<Space>rn` |
-| Extract selected code to a function | visual select → `<Space>re` |
-| Extract selected code to a variable | visual select → `<Space>rv` |
-| Inline a variable | `<Space>ri` |
-| Toggle a line comment | `gcc` |
-| Toggle a block comment | `gbc` |
-| Comment a range | `gc` + motion |
-| Wrap word in quotes / brackets | `ys` + motion + char (e.g. `ysiw"`) |
-| Change surrounding quotes/brackets | `cs` + old + new (e.g. `cs"'`) |
-| Delete surrounding quotes/brackets | `ds` + char |
-| Paste from earlier yanks | `p` then `<C-n>` / `<C-p>` to cycle |
-| Pick any past yank | `<Space>fy` |
-| See full undo history visually | `<Space>uu` |
-| Clear search highlights | `<Space>nh` |
+| I want to… | Keys | Plugin |
+|---|---|---|
+| Exit insert mode | `jk` | core |
+| Complete: next / prev / accept / dismiss / docs | `Ctrl-j` `Ctrl-k` `Enter` `Ctrl-e` `Ctrl-Space` | blink.cmp |
+| Scroll completion docs | `Ctrl-b` / `Ctrl-f` | blink.cmp |
+| Snippet: jump forward / back | `Tab` / `S-Tab` (while a snippet is active) | blink.cmp |
+| Rename symbol (live preview) | `<Space>rn` | inc-rename |
+| Code action (fix, import, …) | `<Space>ca` | lsp |
+| Format buffer / selection | `<Space>mp` | conform (also on save) |
+| Lint now | `<Space>ml` | nvim-lint (also on save) |
+| Toggle inlay hints | `<Space>uh` | lsp |
+| Project find & replace / word under cursor / this file | `<Space>SS` / `<Space>Sw` / `<Space>Sf` | spectre |
+| Comment line / block / motion | `gcc` / `gbc` / `gc{motion}` | Comment |
+| Surround add / change / delete | `ys{motion}{char}` / `cs{old}{new}` / `ds{char}` | nvim-surround |
+| Select around/inside function, class, block | `af` `if` `ac` `ic` `ab` `ib` | treesitter-textobjects |
+| Undo tree | `<Space>uu` | undotree |
+| Increment / decrement number | `<Space>+` / `<Space>-` | core |
+| Clear search highlight | `<Space>nh` | core |
+| Next / prev TODO comment | `]t` / `[t` | todo-comments |
 
----
+## Diagnostics & problems
 
-## Code intel
-
-| I want to… | Keys |
-|------------|------|
-| See diagnostics for the current line | `<Space>D` |
-| Jump to next / previous diagnostic | `]d` / `[d` |
-| Open the diagnostics panel | `<Space>xx` |
-| Run a code action (fix / import / etc.) | `<Space>ca` |
-| Format the file | `<Space>mp` |
-| Toggle inlay hints | `<Space>uh` |
-| Open the symbol outline sidebar | `<Space>ra` |
-
----
+| I want to… | Keys | Plugin |
+|---|---|---|
+| Show diagnostics for this line | `gl` | lsp |
+| Next / prev diagnostic | `]d` / `[d` | lsp |
+| Project diagnostics panel / this buffer | `<Space>xx` / `<Space>xd` | trouble |
+| Search TODO comments (telescope) | `<Space>ft` | todo-comments |
+| Quickfix / loclist / todos / LSP refs panel | `<Space>xq` `<Space>xl` `<Space>xt` `<Space>xr` | trouble |
+| Restart LSP | `<Space>rs` | lsp |
 
 ## Git
 
-| I want to… | Keys |
-|------------|------|
-| Stage, commit, push (full UI) | `<Space>lg` → Space to stage → `c` commit → `P` push |
-| See a diff of all my changes vs HEAD | `<Space>gd` |
-| Stage one hunk | `]h` to navigate → `<Space>hs` |
-| Stage the whole file | `<Space>hS` |
-| Reset a hunk | `<Space>hr` |
-| Preview a hunk inline | `<Space>hp` |
-| See blame for the current line | `<Space>hb` |
-| Toggle blame column | `<Space>hB` |
-| See this file's commit history | `<Space>gh` |
-| See the whole repo's history | `<Space>gH` |
-| See one file's commits in quickfix | `<Space>gL` |
-| Interactive rebase | `<Space>gr` → type base branch → Enter |
-| Resolve a merge conflict | `<Space>gd` → edit result buffer → `<Space>hS` → `<Space>gc` |
-| Open a PR list | `<Space>go` |
-| Review a PR (diff + files) | `<Space>go` → pick PR → `<Space>pd` / `<Space>pf` |
-| Add a review comment | (inside PR buffer) `<Space>ca` |
-| Approve / request changes | `<Space>va` / `<Space>vr` |
-| Submit review | `<Space>vs` |
-| Checkout a PR branch | `<Space>po` |
+| I want to… | Keys | Plugin |
+|---|---|---|
+| Lazygit (repo) / current file / config | `<Space>lg` / `<Space>lG` / `<Space>lC` | lazygit |
+| Diff working tree vs HEAD / close | `<Space>gd` / `<Space>gc` | diffview |
+| File history / repo history | `<Space>gh` / `<Space>gH` | diffview |
+| Next / prev hunk | `]h` / `[h` | gitsigns |
+| Stage / reset hunk (n or visual) | `<Space>hs` / `<Space>hr` | gitsigns |
+| Stage / reset buffer, undo stage | `<Space>hS` / `<Space>hR` / `<Space>hu` | gitsigns |
+| Preview hunk / diff this / diff vs ~ | `<Space>hp` / `<Space>hd` / `<Space>hD` | gitsigns |
+| Blame line / toggle blame column | `<Space>hb` / `<Space>hB` | gitsigns |
+| Select hunk text object | `ih` | gitsigns |
+| GitHub: PR list / issue list / start review | `<Space>go` / `<Space>gi` / `<Space>gR` | octo |
+| In a PR buffer: checkout, merge, squash-merge, commits, files, diff | `<Space>po pm pM pc pf pd` | octo |
+| In a PR buffer: add/remove reviewer, close, reopen, URL, browser | `<Space>pv pV px pO pu pb` | octo |
+| In an issue buffer: close, reopen, list, assignee, label, URL, browser | `<Space>ix io il ia iL iu ib` | octo |
+| Review thread: comment, suggestion, delete, submit, approve, request changes, close | `<Space>ca sa cd vs va vr vx` | octo |
 
----
+## Debug (nvim-dap, Python)
 
-## Debugging
+| Keys | Action |
+|---|---|
+| `<Space>db` / `<Space>dB` | toggle breakpoint / conditional breakpoint |
+| `<Space>dc` | continue / start (choose "Launch file", "…with args", or "pytest: current file") |
+| `<Space>dn` `<Space>di` `<Space>do` | step over / into / out |
+| `<Space>de` | evaluate expression (normal or visual) |
+| `<Space>dr` / `<Space>du` | REPL / toggle UI |
+| `<Space>dl` / `<Space>dx` | run last / terminate |
 
-| I want to… | Keys |
-|------------|------|
-| Set a breakpoint | `<Space>db` |
-| Set a conditional breakpoint | `<Space>dB` |
-| Start / continue the session | `<Space>dc` |
-| Step over | `<Space>dn` |
-| Step into | `<Space>di` |
-| Step out | `<Space>do` |
-| Evaluate an expression / variable | `<Space>de` (normal or visual) |
-| Open the REPL | `<Space>dr` |
-| Toggle DAP UI | `<Space>du` |
-| Stop the session | `<Space>dx` |
-| Debug the test under cursor | `<Space>Td` |
+Repo `.vscode/launch.json` configs are loaded automatically.
 
----
+## Tests (neotest, pytest)
 
-## Testing
+| Keys | Action |
+|---|---|
+| `<Space>Tr` / `<Space>TT` | run nearest / run file |
+| `<Space>Td` | debug nearest (dap) |
+| `<Space>Ts` / `<Space>To` / `<Space>TO` | summary / output / output panel |
+| `<Space>Tx` | stop |
+
+## Windows, tabs, terminal, sessions
 
 | I want to… | Keys |
-|------------|------|
-| Run the test under cursor | `<Space>Tr` |
-| Run all tests in this file | `<Space>TT` |
-| See all test results | `<Space>Ts` |
-| Read output for the nearest test | `<Space>To` |
-| Stop tests | `<Space>Tx` |
+|---|---|
+| Split vertical / horizontal / equalize / close | `<Space>sv` `<Space>sh` `<Space>se` `<Space>sx` |
+| Maximize / restore current split | `<Space>sm` |
+| Center buffer (no-neck-pain) | `<Space>z` |
+| New / close / next / prev tab, buffer in new tab | `<Space>to` `<Space>tx` `<Space>tn` `<Space>tp` `<Space>tf` |
+| Floating terminal | `<Space>tt` |
+| Session: restore cwd / last / pick / don't save on exit | `<Space>qs` `<Space>ql` `<Space>qS` `<Space>qd` |
 
----
+## Claude Code (claudecode.nvim)
 
-## Splits, tabs, windows
+| Keys | Action |
+|---|---|
+| `<Space>cc` / `<Space>cf` | toggle / focus Claude panel |
+| `Alt-w` or `<Space>cw` | switch editor ↔ Claude (works from the terminal too) |
+| `<Space>cb` | add current buffer as context |
+| `<Space>cs` (visual) | send selection; in neo-tree/oil: add file |
+| `<Space>cA` / `<Space>cd` | accept / deny Claude's diff |
+| `<Space>cr` / `<Space>cC` / `<Space>cm` | resume / continue / pick model |
 
-| I want to… | Keys |
-|------------|------|
-| Split vertically | `<Space>sv` |
-| Split horizontally | `<Space>sh` |
-| Move between splits (+ tmux panes) | `Ctrl-h` / `Ctrl-j` / `Ctrl-k` / `Ctrl-l` |
-| Maximize the current split | `<Space>sm` |
-| Close the current split | `<Space>sx` |
-| New tab | `<Space>to` |
-| Close tab | `<Space>tx` |
-| Next / previous tab | `<Tab>` / `<S-Tab>` |
-| Open current buffer in new tab | `<Space>tf` |
+## Dashboard (start screen)
 
----
-
-## Tmux
-
-| I want to… | Keys |
-|------------|------|
-| Switch to another project | `Ctrl-A f` (sessionizer fzf picker) |
-| Switch between sessions | `Ctrl-A s` |
-| New tmux window | `Ctrl-A c` |
-| Next / previous window | `Ctrl-A n` / `Ctrl-A p` |
-| Split pane right | `Ctrl-A |` |
-| Split pane down | `Ctrl-A -` |
-| Zoom a pane to fullscreen | `Ctrl-A z` |
-| Resize pane (repeatable) | `Ctrl-A H/J/K/L` |
-| Swap window left / right | `Ctrl-A <` / `Ctrl-A >` |
-| Copy text in tmux | `Ctrl-A v` → `v` to select → `y` to yank |
-| Save session to disk | `Ctrl-A Ctrl-S` |
-| Restore session from disk | `Ctrl-A Ctrl-R` |
-
----
-
-## Claude Code
-
-| I want to… | Keys |
-|------------|------|
-| Open / close Claude panel | `<Space>cc` |
-| Switch focus editor ↔ Claude | `Alt-w` |
-| Resume my last Claude session | `<Space>cr` |
-| Give Claude the current buffer | `<Space>cb` |
-| Send a selection to Claude | visual select → `<Space>cs` |
-| Accept Claude's diff | `<Space>cA` |
-| Deny Claude's diff | `<Space>cd` |
-| Switch Claude model | `<Space>cm` |
-
----
-
-## Session & workspace
-
-| I want to… | Keys |
-|------------|------|
-| Restore session for this directory | `<Space>qs` |
-| Restore last session | `<Space>ql` |
-| Quit without saving session | `<Space>qq` |
-| Toggle floating terminal | `<Space>tt` |
-| Center the buffer (writing mode) | `<Space>z` |
-| Reload tmux config | `Ctrl-A r` |
-| Reload zsh config | `sz` (shell alias) |
+`n` new file · `e` explorer · `f` find file · `F` git files · `w` grep · `r` recent · `b` branches · `g` lazygit · `s` restore session · `t` todos · `p` plugins · `c` config · `q` quit

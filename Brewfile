@@ -2,159 +2,148 @@
 # Brewfile — Homebrew formulae and casks
 # ------------------------------------------------------------------------------
 # What it does:
-#   Declares all Homebrew packages (CLI tools, shell, dev tools, languages,
-#   fonts, casks). Used by setup.sh via: brew bundle --file="$REPO/Brewfile".
+#   Declares every Homebrew package the dev environment needs. setup.sh runs
+#   `brew bundle --no-upgrade --file=Brewfile`. Each section says *why* the
+#   packages are there so pruning stays easy.
 #
 # How to interact:
-#   Edit this file to add/remove packages. After changing, run:
-#   brew bundle --file=~/sys-config/Brewfile (or your repo path).
-#   To regenerate from current install: brew bundle dump --force --describe --file=Brewfile
+#   Add a line, then: brew bundle --file="$SYS_CONFIG/Brewfile"
+#   See what's installed but not listed here:  brewdiff   (alias)
+#   Formatters/linters/LSPs for Neovim are NOT here — Mason installs them
+#   (nvim/lua/cluna/plugins/mason.lua).
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
-# Taps (third-party Homebrew repositories)
+# Taps (setup.sh runs `brew trust` on each — Homebrew 6 refuses untrusted taps)
 # ------------------------------------------------------------------------------
-tap "dagger/tap"              # Dagger CI/CD pipeline tool
-tap "derailed/k9s"            # K9s Kubernetes TUI
-tap "go-task/tap"             # Task task runner
-tap "homebrew/bundle"         # Support for using Brewfiles
-tap "homebrew/services"       # Manage background services via Homebrew
-tap "osx-cross/arm"           # Cross-compilation toolchains for ARM
+tap "hashicorp/tap"           # Official Terraform builds (core formula is stale/removed)
 
 # ------------------------------------------------------------------------------
-# Core CLI Tools
+# Shell — zsh, prompt, history, navigation (used by zsh/.zshrc)
 # ------------------------------------------------------------------------------
-brew "ack"                    # Search tool like grep, optimized for programmers
-brew "asciinema"              # Record and share terminal sessions
-brew "atuin"                  # Shell history with fuzzy TUI, stats, and optional cloud sync
-brew "bat"                    # Clone of cat(1) with syntax highlighting and Git integration
-brew "beautysh"               # Bash beautifier
-brew "brew-cask-completion"   # Fish/zsh completion for brew cask commands
-brew "bzip2"                  # Freely available high-quality data compressor
-brew "coreutils"              # GNU core utilities (grealpath, gsort, etc.)
-brew "cscope"                 # Code browsing and navigation tool
-brew "curl"                   # Get a file from HTTP, HTTPS or FTP servers
-brew "eza"                    # Modern, maintained replacement for ls with icons and colors
-brew "fnm"                    # Fast and simple Node.js version manager
-brew "fzf"                    # Command-line fuzzy finder written in Go
-brew "jq"                     # Lightweight and flexible command-line JSON processor
-brew "ripgrep"                # Search tool like grep and The Silver Searcher
-brew "tree"                   # Display directories as trees (with optional color/HTML output)
-brew "wget"                   # Internet file retriever
-brew "xz"                     # General-purpose data compression with high compression ratio
-brew "zoxide"                 # Smarter cd — jumps to frecently used dirs; replaces autojump/z
-brew "zstd"                   # Zstandard real-time compression algorithm
+brew "zsh"                    # Shell (chsh'd to by setup.sh)
+brew "starship"               # Prompt (starship/starship.toml)
+brew "atuin"                  # Shell history TUI — owns Ctrl-R
+brew "fzf"                    # Fuzzy finder — Ctrl-T / Alt-C / fzf-tab / widgets
+brew "zoxide"                 # Smarter cd (z, zi)
+brew "direnv"                 # Per-directory .envrc
+brew "zsh-completions"        # Extra completion definitions
+brew "terminal-notifier"      # macOS notifications from scripts / Claude hooks
 
 # ------------------------------------------------------------------------------
-# Shell & Terminal Enhancements
+# Core CLI — the tools aliases/functions/widgets assume exist
 # ------------------------------------------------------------------------------
-brew "bash-completion"        # Programmable completion for Bash
-brew "direnv"                 # Load/unload environment variables based on $PWD
-brew "mosh"                   # Remote terminal application (mobile shell)
-brew "ranger"                 # Vim-like file browser for the terminal
-brew "stow"                   # Organize software neatly under a single directory tree
-brew "terminal-notifier"      # Send macOS User Notifications from the command-line
-brew "tmux"                   # Terminal multiplexer for persistent sessions
-brew "zsh"                    # UNIX shell (Z shell) with scripting features
-brew "zsh-autosuggestions"    # Fish-like fast/unobtrusive autosuggestions for zsh
-brew "zsh-completions"        # Additional completion definitions for zsh
-brew "zsh-syntax-highlighting" # Fish shell-like syntax highlighting for zsh
+brew "bat"                    # cat with highlighting (alias cat=bat; fzf previews)
+brew "fd"                     # Fast find (Ctrl-E / Ctrl-O widgets, telescope)
+brew "ripgrep"                # Fast grep (rgf, telescope live_grep)
+brew "jq"                     # JSON (jqf)
+brew "yq"                     # YAML/TOML counterpart to jq
+brew "tree"                   # Directory trees (fzf previews)
+brew "tlrc"                   # tldr pages (Rust client)
+brew "btop"                   # Resource monitor
+brew "coreutils"              # GNU coreutils (grealpath, gsort, …)
+brew "curl"
+brew "wget"
+brew "asciinema"              # Record terminal sessions
+brew "mosh"                   # Roaming SSH
+brew "ranger"                 # Terminal file browser
+brew "bzip2"
+brew "xz"
+brew "zstd"
 
 # ------------------------------------------------------------------------------
-# Developer Tools
+# Terminal multiplexer + editor
 # ------------------------------------------------------------------------------
-brew "commitizen"             # Defines a standard way of committing (conventional commits)
-brew "gh"                     # GitHub command-line tool
-brew "git-delta"              # Syntax-highlighting pager for git and diff output
-brew "hub"                    # Add GitHub support to git on the command-line
-brew "lazydocker"             # Terminal UI for docker containers, images, and volumes
-brew "lazygit"                # Simple terminal UI for git commands
-brew "pre-commit"             # Framework for managing multi-language pre-commit hooks
-brew "shellcheck"             # Static analysis and lint tool for (ba)sh scripts
-brew "stylua"                 # Opinionated Lua code formatter
-brew "tree-sitter"            # Incremental parsing library for editors
+brew "tmux"                   # tmux/.tmux.conf (plugins via TPM, cloned by setup.sh)
+brew "neovim"                 # nvim/ (plugins via lazy.nvim, bootstrapped on first run)
+brew "tree-sitter"            # Treesitter CLI (parser builds)
+brew "stylua"                 # Lua formatter — also used by scripts/lint.sh + Claude hook
+brew "shellcheck"             # Shell linter — scripts/lint.sh + nvim-lint
+brew "shfmt"                  # Shell formatter — conform + Claude hook
 
 # ------------------------------------------------------------------------------
-# Languages & Runtimes
+# Git & GitHub
 # ------------------------------------------------------------------------------
-brew "go"                     # Open source programming language (Go)
-brew "macvim"                 # GUI for vim, made for macOS
-brew "neovim"                 # Ambitious Vim-fork focused on extensibility and agility
-brew "node"                   # Open-source, cross-platform JavaScript runtime (Node.js)
-brew "r"                      # Software environment for statistical computing
-brew "rust"                   # Safe, concurrent, practical systems language
-brew "yarn"                   # JavaScript package manager
+brew "git-delta"              # Pager for git diff (git-configs/.gitconfig)
+brew "git-lfs"                # Required by .gitconfig [filter "lfs"]
+brew "gh"                     # GitHub CLI (gcpr, gprco, octo.nvim)
+brew "lazygit"                # Git TUI (lg, prefix+g in tmux, <leader>lg in nvim)
+brew "pre-commit"             # Git hook framework
+brew "commitizen"             # Conventional commits helper
 
 # ------------------------------------------------------------------------------
-# Python Ecosystem
+# Python (primary language) — pyenv for interpreters, uv for projects
 # ------------------------------------------------------------------------------
-brew "ipython"                # Interactive computing in Python
-brew "pipenv"                 # Python dependency management via Pipfile
-brew "poetry"                 # Python package management tool
-brew "pyenv"                  # Python version management
-brew "pyenv-virtualenv"       # Pyenv plugin to manage virtualenv
-brew "python@3.10"            # Interpreted, interactive, object-oriented programming language
-brew "python@3.11"            # Interpreted, interactive, object-oriented programming language
-brew "python@3.13"            # Interpreted, interactive, object-oriented programming language
-brew "virtualenv"             # Tool for creating isolated virtual Python environments
+brew "pyenv"                  # Python versions (setup.sh installs + sets global 3.13)
+brew "pyenv-virtualenv"       # pyenv venv plugin
+brew "uv"                     # Fast package/venv manager (uvv, uvs, uvr, …)
+brew "python@3.13"            # Homebrew python for formulae that need it
+brew "ipython"
+brew "poetry"                 # For projects that still use it
 
 # ------------------------------------------------------------------------------
-# System Libraries & Dependencies
+# Node — only for npm-distributed tools (Mason LSPs/prettier, Claude Code deps)
 # ------------------------------------------------------------------------------
-brew "llvm"                   # Next-gen compiler infrastructure
-brew "openblas"               # Optimized linear algebra library (for R, NumPy, etc.)
-brew "zlib"                   # General-purpose lossless data-compression library
+brew "fnm"                    # Node version manager (setup.sh installs LTS); do NOT add brew "node"
 
 # ------------------------------------------------------------------------------
-# Databases
+# Data & databases
 # ------------------------------------------------------------------------------
-brew "postgresql@14"          # Object-relational database system
-brew "sqlite"                 # Lightweight, embedded SQL database engine
-brew "mycli"                  # MySQL CLI
+brew "duckdb"                 # csvq / pq helpers; local SQL on files
+brew "sqlite"
+brew "mycli"                  # MySQL CLI (phil-db-* functions)
+cask "dbeaver-community"      # GUI SQL client
 
 # ------------------------------------------------------------------------------
-# Containers & Kubernetes
+# Containers, Kubernetes, cloud, infra
 # ------------------------------------------------------------------------------
-brew "dagger"                 # Portable devkit for CI/CD pipelines
-brew "docker", link: false    # Pack, ship and run applications as lightweight containers
-brew "docker-completion"      # Bash/zsh completion for Docker CLI
-brew "hadolint"               # Smarter Dockerfile linter to validate best practices
-brew "helm"                   # Kubernetes package manager
-brew "k9s"                    # Kubernetes CLI to manage clusters (TUI)
-brew "kubernetes-cli"         # Kubernetes command-line interface (kubectl)
+brew "docker", link: false    # CLI (Docker Desktop cask provides the daemon)
+brew "docker-completion"
+brew "lazydocker"             # Docker TUI (ld)
+brew "hadolint"               # Dockerfile linter
+brew "kubernetes-cli"         # kubectl (kx, kns, kl, kex)
+brew "helm"
+brew "k9s"                    # Kubernetes TUI (homebrew-core)
+brew "go-task"                # Taskfile runner
+brew "hashicorp/tap/terraform" # tfi/tfp/tfa…, terraformls in nvim
+cask "gcloud-cli"             # gcloud / bq (functions.shrc gcpp, query-gcp)
+cask "docker-desktop"
 
 # ------------------------------------------------------------------------------
-# Infrastructure & DevOps
+# Docs & linting (non-Mason)
 # ------------------------------------------------------------------------------
-brew "go-task"                # Task runner/build tool (simpler than Make)
-brew "terraform"              # Tool to build, change, and version infrastructure
+brew "markdownlint-cli"       # scripts + nvim-lint
+brew "marksman"               # Markdown LSP
+brew "mdcat"                  # Render markdown in terminal
+brew "yamllint"
 
 # ------------------------------------------------------------------------------
-# Documentation & Linting
+# Other languages (occasional — remove if you stop using them)
 # ------------------------------------------------------------------------------
-brew "markdown"               # Markdown processing tools
-brew "markdownlint-cli"       # CLI for Markdown style checker and lint tool
-brew "marksman"               # Language Server Protocol for Markdown
-brew "mdcat"                  # Show markdown documents on text terminals
-brew "yamllint"               # Linter for YAML files
+brew "go"                     # go-task plugins, occasional tooling
+brew "rust"                   # cargo for the odd Rust CLI; Mason cargo builds
+brew "r"                      # R (alias R=…)
+brew "openblas"               # Linear algebra for R / NumPy
+brew "llvm"                   # clang toolchain for native builds
 
 # ------------------------------------------------------------------------------
-# Fonts
+# Terminal emulator + fonts (ghostty/config expects JetBrainsMono Nerd Font)
 # ------------------------------------------------------------------------------
-cask "font-hack-nerd-font"    # Hack font patched with Nerd Fonts icons
-cask "font-iosevka"           # Flexible typeface for code, optimized for programming
+cask "ghostty"
+cask "font-jetbrains-mono-nerd-font"
+cask "font-hack-nerd-font"
+cask "font-iosevka"
 
 # ------------------------------------------------------------------------------
-# GUI Applications (Casks)
+# AI tooling
 # ------------------------------------------------------------------------------
-cask "dbeaver-community"      # Universal database tool and SQL client
-cask "disk-inventory-x"       # Disk usage utility and visualizer
-cask "docker-desktop"         # App to build and share containerised applications
-cask "dockfix"                # Dock replacement and customization
-cask "gcloud-cli"             # Set of tools to manage Google Cloud resources (formerly google-cloud-sdk)
-cask "kitty"                  # GPU-based terminal emulator
-cask "mark-text"              # Open-source Markdown editor with live preview
-cask "notion"                 # App to write, plan, collaborate, and get organised
-cask "sublime-text"           # Text editor for code, markup and prose
-cask "tuple"                  # Remote pair programming app
-cask "zoom"                   # Video communication and virtual meeting platform
+cask "claude-code"            # Claude Code CLI (config in claude/, linked by setup.sh)
+
+# ------------------------------------------------------------------------------
+# GUI apps
+# ------------------------------------------------------------------------------
+cask "notion"
+cask "sublime-text"
+cask "tuple"
+cask "zoom"
+cask "dockfix"

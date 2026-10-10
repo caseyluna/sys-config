@@ -3,15 +3,19 @@
 -- ------------------------------------------------------------------------------
 -- What it does: File tree, buffer list, and git status in a float or sidebar.
 --   Replaces netrw; supports filtering and follow-current-file.
--- Keymaps: <leader>ee (filesystem float), <leader>bf (buffers), <leader>eg (git status).
--- Notes: Depends on nvim-window-picker, plenary, web-devicons, nui. Branch v3.x.
+-- Keymaps: <leader>ee files · <leader>eg git status · <leader>bf buffers (all floating)
+-- Notes: Lazy-loads on first keymap. Directory *editing* is oil (<leader>o).
 -- ------------------------------------------------------------------------------
 
 return {
 	"nvim-neo-tree/neo-tree.nvim",
 	branch = "v3.x",
 	cmd = "Neotree",
-	event = "VeryLazy",
+	keys = {
+		{ "<leader>ee", "<cmd>Neotree filesystem reveal float<CR>", desc = "Explorer: files" },
+		{ "<leader>eg", "<cmd>Neotree git_status reveal float<CR>", desc = "Explorer: git status" },
+		{ "<leader>bf", "<cmd>Neotree buffers reveal float<CR>", desc = "Explorer: buffers" },
+	},
 	dependencies = {
 		"s1n7ax/nvim-window-picker",
 		"nvim-lua/plenary.nvim",
@@ -59,25 +63,5 @@ return {
 				},
 			},
 		})
-
-		-- Keybindings for Neo-tree views
-		vim.keymap.set(
-			"n",
-			"<leader>ee",
-			":Neotree filesystem reveal float<CR>",
-			{ desc = "NeoTree: Show Filesystem (float)" }
-		)
-		vim.keymap.set(
-			"n",
-			"<leader>bf",
-			":Neotree buffers reveal float<CR>",
-			{ desc = "NeoTree: Show Buffers (float)" }
-		)
-		vim.keymap.set(
-			"n",
-			"<leader>eg",
-			":Neotree git_status reveal float<CR>",
-			{ desc = "NeoTree: Show Git Status (float)" }
-		)
 	end,
 }

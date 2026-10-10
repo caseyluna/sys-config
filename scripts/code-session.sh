@@ -17,6 +17,8 @@
 #   CODE_BOTTOM_PCT (default 25), CODE_RIGHT_PCT (default 30), CODE_RIGHT_CMD (default claudecode).
 # ------------------------------------------------------------------------------
 
+set -euo pipefail
+
 SESSION_NAME="${CODE_SESSION_NAME:-code}"
 BOTTOM_PCT="${CODE_BOTTOM_PCT:-25}"
 RIGHT_PCT="${CODE_RIGHT_PCT:-30}"
@@ -41,10 +43,10 @@ tmux new-session -s "$SESSION_NAME" -d zsh -ic 'vv'
 T="$SESSION_NAME:0.0"
 
 # Pane 1: full-height right pane = Claude Code (split pane 0 to the right)
-tmux split-window -t "$T" -h -p "$RIGHT_PCT" "$RIGHT_CMD"
+tmux split-window -t "$T" -h -l "${RIGHT_PCT}%" "$RIGHT_CMD"
 
 # Pane 2: bottom-left = terminal (split original pane 0 vertically)
-tmux split-window -t "$T" -v -p "$BOTTOM_PCT"
+tmux split-window -t "$T" -v -l "${BOTTOM_PCT}%"
 
 if [[ -n "${TMUX:-}" ]]; then
   tmux switch-client -t "$SESSION_NAME"

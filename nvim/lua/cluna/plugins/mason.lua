@@ -1,49 +1,58 @@
 -- ------------------------------------------------------------------------------
--- mason.nvim (williamboman/mason.nvim) — LSP/formatter/linter installer
+-- mason.nvim (mason-org/mason.nvim) — installs LSP servers, formatters, linters
 -- ------------------------------------------------------------------------------
--- What it does: Installs LSP servers (lua_ls, pyright, etc.) and tools (stylua,
---   prettier, ruff, bash-language-server) via Mason. ensure_installed on startup.
--- Keymaps: :Mason to open UI; LSP/keymaps come from lspconfig.
--- Notes: mason-lspconfig bridges Mason with lspconfig; mason-tool-installer for non-LSP tools.
+-- What it does: On startup ensures every server in lspconfig.lua and every
+--   formatter/linter/debugger used by formatting.lua, lint.lua and dap.lua is
+--   installed under ~/.local/share/nvim/mason. :Mason opens the UI.
+-- Notes: automatic_enable is OFF — lspconfig.lua decides what to enable, so a
+--   formatter like stylua is never started as a language server.
+--   Headless (setup.sh): nvim --headless "+MasonToolsInstallSync" +qa
 -- ------------------------------------------------------------------------------
 
 return {
-	"williamboman/mason.nvim",
+	"mason-org/mason.nvim",
 	dependencies = {
-		"williamboman/mason-lspconfig.nvim",
+		"mason-org/mason-lspconfig.nvim",
 		"WhoIsSethDaniel/mason-tool-installer.nvim",
 	},
 	config = function()
-		local mason = require("mason")
-		local mason_lspconfig = require("mason-lspconfig")
-		local mason_tool_installer = require("mason-tool-installer")
-
-		mason.setup({
-			ui = {
-				icons = {
-					package_installed = "✓",
-					package_pending = "➜",
-					package_uninstalled = "✗",
-				},
-			},
+		require("mason").setup({
+			ui = { icons = { package_installed = "✓", package_pending = "➜", package_uninstalled = "✗" } },
 		})
 
-		mason_lspconfig.setup({
+		-- Language servers (names = lspconfig names; must match lspconfig.lua)
+		require("mason-lspconfig").setup({
+			automatic_enable = false,
 			ensure_installed = {
-				"lua_ls",
-				"cssls",
-				"html",
-				"bashls",
 				"pyright",
+				"ruff",
+				"lua_ls",
+				"bashls",
+				"terraformls",
+				"dockerls",
+				"yamlls",
 				"jsonls",
+				"taplo",
+				"sqls",
+				"marksman",
+				"html",
+				"cssls",
 			},
 		})
 
-		mason_tool_installer.setup({
+		-- Formatters, linters, debug adapters (names = Mason package names)
+		require("mason-tool-installer").setup({
 			ensure_installed = {
-				"ruff", -- Formatter + linter
-				"stylua", -- Lua formatter
-				"prettier",
+				"stylua", -- lua format
+				"shfmt", -- shell format
+				"shellcheck", -- shell lint
+				"prettier", -- json/yaml/md/html/css format
+				"sqlfluff", -- sql format + lint
+				"markdownlint", -- markdown lint/fix
+				"mypy", -- python type lint
+				"debugpy", -- python debug adapter
+				"hadolint", -- dockerfile lint
+				"yamllint", -- yaml lint
 			},
 		})
 	end,

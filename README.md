@@ -1,60 +1,50 @@
 # sys-config
 
-Dotfiles and bootstrap for **zsh**, **tmux**, **Neovim**, **git**, and **Starship**.  
-Designed so you can **clone the repo and run one script** to get a working setup on a new machine.
-
----
-
-## Quick start
+Dotfiles + one-script bootstrap for a Mac dev environment: **zsh · tmux · Neovim · git · Ghostty · Claude Code**.
 
 ```bash
-git clone <this-repo> ~/sys-config
-cd ~/sys-config
-bash setup.sh
-exec $SHELL
+git clone git@github.com:caseyluna/sys-config.git ~/sys-config
+cd ~/sys-config && bash setup.sh      # Homebrew, Brewfile, symlinks, OMZ, TPM, pyenv, fnm, nvim, Claude
+exec zsh
+bash scripts/validate.sh              # everything green?
 ```
 
-Then start **tmux** and press **Ctrl-A**, then **I** (capital I) to install tmux plugins.
+| I want to… | Go to |
+|---|---|
+| Install on a new machine / see what gets linked where | [docs/INSTALL.md](docs/INSTALL.md) |
+| Look up a Neovim key | [docs/KEYS.md](docs/KEYS.md) |
+| Look up a shell alias / tmux key | [docs/CHEATSHEET.md](docs/CHEATSHEET.md) |
+| Do a task end-to-end (review a PR, debug, test…) | [docs/WORKFLOWS.md](docs/WORKFLOWS.md) |
+| Add or update a plugin / tool / alias | [docs/UPDATING.md](docs/UPDATING.md) |
+| Fix something broken | [docs/DEBUG.md](docs/DEBUG.md) |
+| All docs | [docs/INDEX.md](docs/INDEX.md) |
 
-| Next step | Where to look |
-|-----------|----------------|
-| Full install steps, symlinks, verification | [docs/INSTALL.md](docs/INSTALL.md) |
-| Something broke | [docs/DEBUG.md](docs/DEBUG.md) |
-| All keybindings and commands | [docs/CHEATSHEET.md](docs/CHEATSHEET.md) |
-| **All docs in one place** | [docs/INDEX.md](docs/INDEX.md) |
+## Layout
 
-**Validation:** `bash scripts/validate.sh` (after install). **Lint (before commit):** `bash scripts/lint.sh`. See [docs/TESTING.md](docs/TESTING.md).
+```
+setup.sh        bootstrap (idempotent; --links-only / --no-brew / --no-nvim / --yes)
+Brewfile        every Homebrew formula/cask, grouped + commented by purpose
+zsh/            .zprofile (PATH/env, once) · .zshrc (interactive) · aliases.shrc · functions.shrc
+fzf/            custom fzf widgets (Ctrl-E, Ctrl-O)
+tmux/           .tmux.conf (plugins install themselves into ~/.tmux/plugins)
+nvim/           init.lua → lua/cluna/{core,lazy,plugins/<one file per plugin>}
+git-configs/    .gitconfig · .gitignore_global
+starship/       prompt          ghostty/   terminal
+claude/         Claude Code: settings.json · CLAUDE.md · keybindings · statusline · hooks/ · skills/
+scripts/        lint.sh (pre-commit) · validate.sh (post-install) · tmux-sessionizer · code-session.sh
+docs/           the guides above
+```
 
----
+## Extending
 
-## What’s in the repo
+| Add a… | Edit | Then |
+|---|---|---|
+| shell alias / function | `zsh/aliases.shrc` / `zsh/functions.shrc` (functions get a `# USAGE:` line) | `sz` |
+| Neovim plugin | new `nvim/lua/cluna/plugins/<name>.lua` (copy a banner) + group in `which-key.lua` + row in `docs/KEYS.md` | `:Lazy sync` |
+| LSP / formatter / linter | `lspconfig.lua` + `mason.lua` (+ `formatting.lua` / `lint.lua`) | `:MasonToolsInstall` |
+| Homebrew package | `Brewfile` (right section, with a comment) | `brew bundle --file=Brewfile` |
+| tmux plugin | `set -g @plugin` line in `tmux/.tmux.conf` | `prefix + I` |
+| Claude skill | `claude/skills/<name>/SKILL.md` | available in every project |
+| symlinked file | `do_links()` in `setup.sh` + table in `docs/INSTALL.md` | `bash setup.sh --links-only` |
 
-| Area | What it does | How you interact |
-|------|----------------|------------------|
-| **Shell** | zsh (`.zshrc`, `.zprofile`), aliases, functions | Edit files in `zsh/`; symlinks from `~`. Reload: `source ~/.zshrc`. |
-| **Prompt** | Starship (`starship.toml`) | Config: `starship/starship.toml`. Optional Powerlevel10k in `powerline/`. |
-| **Tmux** | Sessions, panes, copy mode, TPM plugins (Catppuccin, resurrect, continuum, fzf, yank, vim-tmux-navigator) | Config: `tmux/.tmux.conf`. Prefix: **Ctrl-A**. Reload: prefix + `r`. Install plugins: prefix + `I`. |
-| **Neovim** | Full Lua config: options, keymaps, lazy.nvim, LSP (Mason), Telescope, Git (Fugitive, gitsigns, LazyGit), etc. | Config: `nvim/`. Leader: **Space**. See [docs/CHEATSHEET.md](docs/CHEATSHEET.md) for keymaps. |
-| **Git** | Global `.gitconfig` (delta, nvim difftool/mergetool), `.gitignore_global` | Config: `git-configs/`. Commands: `git diff`, `git difftool`, etc. |
-| **Bootstrap** | `setup.sh`: Homebrew, Brewfile, symlinks, Oh My Zsh, fzf, TPM, pyenv | Run once per machine (or after cloning elsewhere). See [docs/INSTALL.md](docs/INSTALL.md). |
-
----
-
-## Documentation (full index)
-
-All documentation lives under **docs/** and is listed in **[docs/INDEX.md](docs/INDEX.md)** with a short description and “when to use” for each file:
-
-- **[docs/INSTALL.md](docs/INSTALL.md)** — Prerequisites, install steps, symlink table, verification, clean-room testing.
-- **[docs/DEBUG.md](docs/DEBUG.md)** — Troubleshooting shell, tmux, Neovim, git, setup script; validation checklist.
-- **[docs/CHEATSHEET.md](docs/CHEATSHEET.md)** — Keymaps and commands for Zsh, Tmux, and Neovim (comprehensive).
-- **[docs/GIT-REBASE.md](docs/GIT-REBASE.md)** — Interactive rebase with Fugitive, LazyGit, or terminal.
-- **[docs/TESTING.md](docs/TESTING.md)** — Lint and validate scripts; optional CI.
-- **[docs/AUDIT-AND-PLAN.md](docs/AUDIT-AND-PLAN.md)** — Historical audit (deprecated; see INDEX for current docs).
-
----
-
-## Optional follow-ups
-
-- **Reorganize:** Optional future layout could use `config/`, `scripts/`, `docs/` more explicitly.
-- **macOS defaults / fonts:** Optional scripts or docs (not included yet).
-- **More plugins:** Add Neovim plugins under `nvim/lua/cluna/plugins/`, tmux plugins in `tmux/.tmux.conf`. Keymaps are in [docs/CHEATSHEET.md](docs/CHEATSHEET.md).
+Before committing: `bash scripts/lint.sh`. CI runs the same on every push/PR.

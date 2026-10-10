@@ -21,13 +21,13 @@ return {
 	},
 	cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewToggleFiles", "DiffviewFileHistory" },
 	keys = {
-		{ "<leader>gd", "<cmd>DiffviewOpen<CR>",              desc = "Diffview: open diff (HEAD)" },
-		{ "<leader>gh", "<cmd>DiffviewFileHistory %<CR>",     desc = "Diffview: file history" },
-		{ "<leader>gH", "<cmd>DiffviewFileHistory<CR>",       desc = "Diffview: repo history" },
-		{ "<leader>gc", "<cmd>DiffviewClose<CR>",             desc = "Diffview: close" },
+		{ "<leader>gd", "<cmd>DiffviewOpen<CR>", desc = "Diffview: open diff (HEAD)" },
+		{ "<leader>gh", "<cmd>DiffviewFileHistory %<CR>", desc = "Diffview: file history" },
+		{ "<leader>gH", "<cmd>DiffviewFileHistory<CR>", desc = "Diffview: repo history" },
+		{ "<leader>gc", "<cmd>DiffviewClose<CR>", desc = "Diffview: close" },
 	},
 	opts = {
-		enhanced_diff_hl = true,  -- use treesitter for inline diff highlights
+		enhanced_diff_hl = true, -- use treesitter for inline diff highlights
 
 		view = {
 			-- 3-way layout for merge conflicts: ours | result | theirs

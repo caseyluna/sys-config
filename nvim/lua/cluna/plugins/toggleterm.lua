@@ -10,7 +10,7 @@
 return {
 	"akinsho/toggleterm.nvim",
 	version = "*",
-	event = "VeryLazy",
+	cmd = "ToggleTerm",
 	opts = {
 		open_mapping = false,
 		direction = "float",

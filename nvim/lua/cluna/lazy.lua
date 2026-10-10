@@ -2,45 +2,38 @@
 -- lazy.lua — Plugin manager (lazy.nvim) bootstrap and config
 -- ------------------------------------------------------------------------------
 -- What it does:
---   Bootstraps lazy.nvim from data dir, prepends to rtp, then loads all specs
---   from lua/cluna/plugins/ (each file is auto-imported). Enables checker,
---   install of missing plugins, and disables several built-in plugins for performance.
+--   Clones lazy.nvim on first run, then loads every spec from lua/cluna/plugins/
+--   (each file is auto-imported). Disables unused built-in plugins.
 --
 -- How to interact:
---   Add a plugin: create lua/cluna/plugins/name.lua that returns a lazy.nvim
---   spec (table or array of tables). Restart Neovim; lazy will install. Open
---   :Lazy to manage plugins. See docs/PLUGIN-RECOMMENDATIONS.md for ideas.
+--   Add a plugin: create lua/cluna/plugins/<name>.lua returning a lazy spec.
+--   :Lazy to manage; :Lazy sync after editing specs. Headless bootstrap (used
+--   by setup.sh): nvim --headless "+Lazy! sync" +qa
 --
--- Author: Casey A. Thayer
 -- Location: ~/.config/nvim/lua/cluna/lazy.lua
 -- ------------------------------------------------------------------------------
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 
--- Clone lazy.nvim if missing (first run or fresh install)
-if not vim.loop.fs_stat(lazypath) then
+if not vim.uv.fs_stat(lazypath) then
 	vim.fn.system({
 		"git",
 		"clone",
 		"--filter=blob:none",
 		"https://github.com/folke/lazy.nvim.git",
-		"--branch=stable", -- latest stable release
+		"--branch=stable",
 		lazypath,
 	})
 end
 vim.opt.rtp:prepend(lazypath)
 
--- Load all plugin specs from cluna.plugins (each file in plugins/ is auto-imported)
 require("lazy").setup({
 	{ import = "cluna.plugins" },
 }, {
-	checker = { enabled = true, notify = false },
-	change_detection = {
-		notify = false, -- Don’t spam about config changes
-	},
-	install = {
-		missing = true, -- Auto-install missing plugins on startup
-	},
+	checker = { enabled = true, notify = false, frequency = 86400 }, -- check for updates once a day
+	change_detection = { notify = false },
+	install = { missing = true, colorscheme = { "catppuccin-mocha" } },
+	rocks = { enabled = false }, -- no luarocks-dependent plugins; avoids hererocks health errors
 	performance = {
 		rtp = {
 			disabled_plugins = {

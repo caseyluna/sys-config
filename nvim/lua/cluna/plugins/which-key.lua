@@ -1,39 +1,50 @@
 -- ------------------------------------------------------------------------------
--- which-key.nvim (folke/which-key.nvim) — Keymap prefix popup
+-- which-key.nvim (folke/which-key.nvim) — Keymap popup + group labels
 -- ------------------------------------------------------------------------------
--- What it does: Shows a popup of available keymaps when you press a prefix
---   (e.g. <leader>f shows file-related keymaps). Reduces memorization.
--- Keymaps: <leader>? (buffer-local keymaps); <leader>f/g/b (group labels only).
--- Notes: Loads on VeryLazy; opts = {} uses defaults.
+-- What it does: Press <leader> (or any prefix) and pause to see what's bound.
+--   The spec below only names the groups; the keymaps themselves live in each
+--   plugin file. When you add a new <leader>x prefix, add its label here.
+-- Keymaps: <leader>? — show keymaps for the current buffer
 -- ------------------------------------------------------------------------------
 
 return {
 	"folke/which-key.nvim",
 	event = "VeryLazy",
-	opts = {},
-
+	opts = {
+		preset = "modern",
+		spec = {
+			{ "<leader>a", group = "harpoon" },
+			{ "<leader>b", group = "buffer" },
+			{ "<leader>c", group = "claude" },
+			{ "<leader>d", group = "debug" },
+			{ "<leader>e", group = "explorer" },
+			{ "<leader>f", group = "find" },
+			{ "<leader>g", group = "git" },
+			{ "<leader>h", group = "hunks" },
+			{ "<leader>i", group = "octo issue", mode = { "n" } },
+			{ "<leader>l", group = "lazygit" },
+			{ "<leader>m", group = "format/lint" },
+			{ "<leader>p", group = "octo pr" },
+			{ "<leader>q", group = "session" },
+			{ "<leader>r", group = "rename/refactor/outline" },
+			{ "<leader>s", group = "splits" },
+			{ "<leader>S", group = "search/replace" },
+			{ "<leader>t", group = "tabs/terminal" },
+			{ "<leader>T", group = "tests" },
+			{ "<leader>u", group = "ui/undo" },
+			{ "<leader>x", group = "trouble" },
+			{ "[", group = "prev" },
+			{ "]", group = "next" },
+			{ "g", group = "goto" },
+		},
+	},
 	keys = {
-		{ "<leader>?", function() require("which-key").show({ global = false }) end, desc = "Show buffer-local keymaps" },
-		{ "<leader>a", name = "+harpoon" },
-		{ "<leader>b", name = "+buffer" },
-		{ "<leader>c", name = "+Claude Code" },
-		{ "<leader>d", name = "+dap/debug" },
-		{ "<leader>D", name = "+diagnostics" },
-		{ "<leader>f", name = "+file/telescope" },
-		{ "<leader>g", name = "+git/github" },
-		{ "<leader>h", name = "+gitsigns/harpoon" },
-		{ "<leader>i", name = "+octo/issue" },
-		{ "<leader>j", name = "+flash" },
-		{ "<leader>p", name = "+octo/pr" },
-		{ "<leader>o", name = "+oil" },
-		{ "<leader>r", name = "+refactor/LSP" },
-		{ "<leader>t", name = "+tab/term/todo" },
-		{ "<leader>T", name = "+neotest" },
-		{ "<leader>u", name = "+undo/inlay" },
-		{ "<leader>l", name = "+lazygit" },
-		{ "<leader>m", name = "+format" },
-		{ "<leader>s", name = "+splits" },
-		{ "<leader>x", name = "+trouble" },
-		{ "<leader>z", name = "+no-neck-pain" },
+		{
+			"<leader>?",
+			function()
+				require("which-key").show({ global = false })
+			end,
+			desc = "Buffer-local keymaps",
+		},
 	},
 }

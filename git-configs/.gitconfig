@@ -99,5 +99,7 @@
   old        = red bold
   new        = green bold
   whitespace = red reverse
+# Push over SSH, clone/fetch over HTTPS — a fresh Mac has no SSH key yet, and
+# setup.sh / lazy.nvim / TPM clone https://github.com/… URLs.
 [url "git@github.com:"]
-	insteadOf = https://github.com/
+	pushInsteadOf = https://github.com/

@@ -1,81 +1,58 @@
 -- ------------------------------------------------------------------------------
--- nvim-treesitter (nvim-treesitter/nvim-treesitter) — Parsers and highlighting
+-- nvim-treesitter — Parsers for highlighting, indent, folds, incremental select
 -- ------------------------------------------------------------------------------
--- What it does: Tree-sitter parsers for syntax highlighting, indent, and
---   incremental selection. nvim-ts-autotag for HTML/JSX tag pairs.
--- Keymaps: <C-Space> / <BS> (incremental selection expand/shrink). :TSInstall <lang>
--- Notes: ensure_installed list below; auto_install true. Build :TSUpdate.
+-- Keymaps: <C-Space> expand selection · <BS> shrink
+-- Notes: Pinned to the `master` branch (the `main` rewrite has a different
+--   API). Folding uses vim.treesitter.foldexpr (core/options.lua).
+--   nvim-ts-autotag closes/renames HTML tags.
 -- ------------------------------------------------------------------------------
 
 return {
 	"nvim-treesitter/nvim-treesitter",
+	branch = "master",
 	event = { "BufReadPre", "BufNewFile" },
 	build = ":TSUpdate",
-	dependencies = {
-		"windwp/nvim-ts-autotag", -- For auto-closing/renaming tags in HTML/JSX
-	},
+	dependencies = { { "windwp/nvim-ts-autotag", opts = {} } },
 	config = function()
-		local treesitter = require("nvim-treesitter.configs")
-
-		treesitter.setup({
-			-- Required empty table to suppress warnings about missing modules
+		require("nvim-treesitter.configs").setup({
 			modules = {},
-
-			-- Auto-install missing parsers when entering buffer
 			auto_install = true,
-
-			-- Install parsers synchronously (only affects ensure_installed)
 			sync_install = false,
-
-			-- Parsers to ignore installing
 			ignore_install = {},
-
-			-- Enable syntax highlighting
-			highlight = {
-				enable = true,
-			},
-
-			-- Enable folding based on AST
-			fold = {
-				enable = true,
-			},
-
-			-- Enable smart indentation
-			indent = {
-				enable = true,
-			},
-
-			-- Enable auto-tagging for HTML, JSX, etc.
-			autotag = {
-				enable = true,
-			},
-
-			-- Enable incremental selection
+			highlight = { enable = true },
+			indent = { enable = true },
 			incremental_selection = {
 				enable = true,
 				keymaps = {
 					init_selection = "<C-space>",
 					node_incremental = "<C-space>",
 					node_decremental = "<BS>",
-					scope_incremental = false, -- set to a key if desired
+					scope_incremental = false,
 				},
 			},
-
-			-- Ensure the following parsers are always installed
 			ensure_installed = {
-				"json",
-				"yaml",
-				"html",
+				"bash",
 				"css",
+				"diff",
+				"dockerfile",
+				"git_config",
+				"git_rebase",
+				"gitcommit",
+				"gitignore",
+				"hcl",
+				"html",
+				"json",
+				"lua",
 				"markdown",
 				"markdown_inline",
-				"bash",
-				"lua",
-				"vim",
-				"dockerfile",
-				"gitignore",
-				"vimdoc",
 				"python",
+				"regex",
+				"sql",
+				"terraform",
+				"toml",
+				"vim",
+				"vimdoc",
+				"yaml",
 			},
 		})
 	end,

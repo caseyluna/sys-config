@@ -9,10 +9,10 @@ Task-based guide for common developer workflows using the full stack of tools in
 ### Fresh machine, new project
 1. `tmux-sessionizer` — pick project directory → creates a named session
 2. Neovim opens automatically with `<Space>qs` to restore last session if one exists
-3. `<Space>ff` to find files, or `e` on the dashboard to open the file tree
+3. `<Space>ff` to find files, or `e` on the dashboard to open the file tree; `s` restores the last session
 
 ### Returning to work
-1. `ta` (alias: `tmux attach`) or `prefix + s` to pick a session
+1. `ta [name]` (attach-or-create) or `prefix + s` to pick a session
 2. Persistence auto-restores your layout: buffers, splits, cursor positions per cwd
 3. If Claude was open: `<Space>cr` to resume the last session
 
@@ -29,7 +29,7 @@ Task-based guide for common developer workflows using the full stack of tools in
 | Know the function/class name | Aerial symbol search | `<Space>rA` |
 | Recent files | Telescope oldfiles | `<Space>fr` |
 | Jump to a visible position | Flash labels | `<Space>j` |
-| Pin 4 key files for a task | Harpoon | `<Space>a` to add, `<Space>1–4` to jump |
+| Pin 4 key files for a task | Harpoon | `<Space>aa` to add, `<Space>1–4` to jump |
 
 ### Navigating a codebase you don't know
 1. `<Space>fs` live grep to find entry points
@@ -56,9 +56,10 @@ Task-based guide for common developer workflows using the full stack of tools in
 ### Reviewing your own changes before committing
 1. `<Space>gd` — diffview opens a full split diff vs HEAD; navigate files in the left panel
 2. `<Space>hs` to stage individual hunks directly in Neovim, or stage whole file with `<Space>hS`
-3. `<Space>gv` — fugitive vertical split shows working tree vs index for the current file
+3. `<Space>hp` previews the hunk under the cursor; `<Space>hd` diffs the file against the index
 
 ### Reviewing someone else's PR
+0. From the shell: `gprco` fuzzy-checks-out a PR; `gprv` opens it in the browser
 1. `<Space>go` — Octo opens a PR list; pick one
 2. `<Space>pf` to see changed files, `<Space>pd` to see the diff
 3. `<Space>gR` to start a formal review
@@ -69,7 +70,6 @@ Task-based guide for common developer workflows using the full stack of tools in
 |------|-----|
 | Full repo history with diffs | `<Space>gH` (diffview repo history) |
 | One file's history | `<Space>gh` (diffview file history) |
-| One file's commits (quickfix) | `<Space>gL` (fugitive 0Gclog) |
 | Blame current line | `<Space>hb` |
 | Toggle blame column | `<Space>hB` |
 
@@ -81,8 +81,8 @@ Task-based guide for common developer workflows using the full stack of tools in
 5. Stage the resolved file: `<Space>hS`
 
 ### Interactive rebase
-- From Neovim: `<Space>gr` → type base branch → Enter; edit the todo buffer
-- From LazyGit: `<Space>lg` → commits list → `e` for interactive rebase
+- From the shell: `grbi 5` (last 5 commits) — opens the todo list in nvim
+- From LazyGit: `<Space>lg` (or `prefix + g` in tmux) → commits list → `e` for interactive rebase
 - Full guide: [GIT-REBASE.md](GIT-REBASE.md)
 
 ---
@@ -90,27 +90,20 @@ Task-based guide for common developer workflows using the full stack of tools in
 ## Editing workflows
 
 ### Project-wide find & replace
-1. `<Space>S` opens Spectre
+1. `<Space>SS` opens Spectre
 2. Type search pattern, tab to replacement
-3. `<Space>sw` with cursor on a word to pre-fill the search
+3. `<Space>Sw` with cursor on a word to pre-fill the search
 4. Apply per-match, per-file, or all at once inside the Spectre buffer
 
 ### Refactoring code
-1. Visual select the code you want to extract
-2. `<Space>re` to extract as a function, `<Space>rv` to extract as a variable
-3. `<Space>ri` on a variable to inline it
-4. `<Space>rn` to rename a symbol across the whole project (LSP)
-5. `gR` to verify all references updated correctly
+1. `<Space>rn` to rename a symbol across the whole project (LSP, live preview)
+2. `<Space>ca` on a symbol for code actions — ruff offers import fixes/organize, pyright offers extract/inline where supported
+3. `gR` to verify all references updated correctly
 
 ### Working with multiple files
-1. `<Space>a` to add up to 4 core files to Harpoon; `<Space>1–4` to jump instantly
-2. Use tabs (`<Tab>`/`<S-Tab>`) for different contexts (e.g. implementation + test)
-3. `<Space>sf` to search/replace only within the current file
-
-### Yank ring (don't lose what you copied)
-1. Yank multiple things with `y` — all go into the ring
-2. Paste with `p`, then `<C-n>`/`<C-p>` to cycle through previous yanks
-3. `<Space>fy` to open Telescope yank history and pick any past yank
+1. `<Space>aa` to add up to 4 core files to Harpoon; `<Space>1–4` to jump instantly
+2. `]b` / `[b` cycle open buffers; `<Space>bd` closes one without disturbing the layout
+3. `<Space>Sf` to search/replace only within the current file
 
 ### Undo history
 - `<Space>uu` opens undotree — a visual tree of every edit state
@@ -122,7 +115,7 @@ Task-based guide for common developer workflows using the full stack of tools in
 ## Debugging
 
 ### Python
-1. Install debugpy via Mason: `:MasonInstall debugpy`
+1. debugpy is installed by Mason automatically (mason.lua)
 2. Open a Python file, `<Space>db` to set a breakpoint on the line you want to pause at
 3. `<Space>dc` to start — pick "Launch file" or "Launch file with args"
 4. DAP UI opens automatically: scopes on the left, REPL at the bottom
@@ -131,10 +124,6 @@ Task-based guide for common developer workflows using the full stack of tools in
 7. `<Space>dx` to terminate; `<Space>du` to close the UI panels
 
 > If the session ends with an error, the UI stays open so you can inspect state. `<Space>du` to close manually.
-
-### JavaScript / TypeScript
-1. Install js-debug-adapter via Mason: `:MasonInstall js-debug-adapter`
-2. Same flow as Python — `<Space>db`, `<Space>dc`, pick "Launch file" or "Attach to process"
 
 ### Debugging a specific test
 1. Put the cursor on the test function
@@ -161,7 +150,7 @@ Task-based guide for common developer workflows using the full stack of tools in
 4. On failure: `<Space>To` to read the full output/traceback
 5. `<Space>Ts` to see all tests in the summary panel and jump to failures
 
-**Supported frameworks:** pytest, go test, Jest, Vitest
+**Supported frameworks:** pytest (add adapters in `neotest.lua` for others)
 
 ---
 
@@ -174,20 +163,27 @@ Persistence saves your session (buffers, layout, cursor) when you quit, keyed by
 |-----|--------|
 | `<Space>qs` | Restore session for current directory |
 | `<Space>ql` | Restore last session (any directory) |
-| `<Space>qq` | Quit this time without saving |
+| `<Space>qS` | Pick a session |
+| `<Space>qd` | Quit this time without saving |
 
 ### tmux-sessionizer
 `prefix + f` opens an fzf picker over your project directories. Selecting one:
 - Creates a new tmux session named after the directory if it doesn't exist
 - Attaches if it does
 
-Run directly: `tmux-sessionizer ~/phillies/pie`
+Run directly: `tmux-sessionizer ~/projects/foo`, or `ts` from the shell. Project roots: `TMUX_PROJECT_DIRS="dir1:dir2"`
 
 ---
 
 ## Working with Claude Code
 
-### Basic usage
+### From the shell
+- `cc` / `ccc` / `ccr` — new / continue / resume. `ccd <branch>` creates a git worktree for the branch and starts Claude in it (parallel work on two branches).
+- `dev` — tmux layout with nvim (top-left), shell (bottom-left), Claude (right).
+- Hooks (`claude/hooks/`): every file Claude edits is auto-formatted (stylua/ruff/shfmt/prettier/terraform/taplo); a macOS notification fires when Claude needs input.
+- Skills: `/dotfiles-check`, `/nvim-plugin`, `/brew-audit`, `/stack-rebase` (`claude/skills/`).
+
+### In Neovim (claudecode.nvim)
 - `<Space>cc` to toggle the panel; `Alt-w` to switch focus between editor and Claude
 - `<Space>cb` to add the current buffer as context
 - Visual select + `<Space>cs` to send a specific selection
@@ -213,7 +209,7 @@ Run directly: `tmux-sessionizer ~/phillies/pie`
 |------|-----|
 | Install a new LSP server or formatter | `:Mason` → search → `i` to install |
 | Update all Neovim plugins | `:Lazy update` |
-| Update all shell/system tools | `brew update && brew upgrade` |
+| Update all shell/system tools | `brewup` |
 | Check what's broken | `bash scripts/lint.sh` |
 | Verify symlinks after pulling | `bash scripts/validate.sh` |
 | Reload tmux config without restart | `prefix + r` |

@@ -1,136 +1,141 @@
 -- ------------------------------------------------------------------------------
--- nvim-lspconfig (neovim/nvim-lspconfig) — LSP client and server configs
+-- nvim-lspconfig (neovim/nvim-lspconfig) — LSP servers for the languages we use
 -- ------------------------------------------------------------------------------
--- What it does: Configures the Neovim LSP client via vim.lsp.config (Neovim 0.11+).
---   Only enables a server if its binary is in PATH (avoids spawn errors for optional LSPs).
--- Keymaps (LSP attach): gD gd gi gt gR, <leader>ca rn d D, [d ]d, K, <leader>rs
--- Notes: Install servers via Mason or system; add new servers to the `servers` table.
+-- What it does: Registers server configs with vim.lsp.config (Neovim 0.11+) and
+--   enables each one. Servers are installed by Mason (mason.lua) — keep the two
+--   lists in sync. Diagnostics UI (signs, virtual text, float) is set here too.
+-- Keymaps (buffer-local, on LspAttach):
+--   gd gi gt gR        definitions / implementations / type defs / references (Telescope)
+--   K                  hover            gl   line diagnostics (float)
+--   [d ]d              prev/next diagnostic
+--   <leader>ca         code action      <leader>rn  rename (inline preview)
+--   <leader>rs         restart LSP      <leader>uh  toggle inlay hints
+-- Notes: Completion capabilities come from blink.cmp (blink.lua).
 -- ------------------------------------------------------------------------------
 
 return {
 	"neovim/nvim-lspconfig",
 	event = { "BufReadPre", "BufNewFile" },
 	dependencies = {
-		"hrsh7th/cmp-nvim-lsp",
-		{ "antosha417/nvim-lsp-file-operations", config = true },
-		{ "folke/lazydev.nvim", ft = "lua", opts = {} },
+		{ "folke/lazydev.nvim", ft = "lua", opts = {} }, -- lua_ls knows the nvim API
+		{ "antosha417/nvim-lsp-file-operations", config = true }, -- rename imports on file move (neo-tree)
 	},
 	config = function()
-		local cmp_nvim_lsp = require("cmp_nvim_lsp")
-		local capabilities = cmp_nvim_lsp.default_capabilities()
-		local keymap = vim.keymap
+		-- ----------------------------------------------------------------------
+		-- Diagnostics appearance
+		-- ----------------------------------------------------------------------
+		vim.diagnostic.config({
+			severity_sort = true,
+			virtual_text = { spacing = 2, prefix = "●" },
+			float = { border = "rounded", source = "if_many" },
+			signs = {
+				text = {
+					[vim.diagnostic.severity.ERROR] = " ",
+					[vim.diagnostic.severity.WARN] = " ",
+					[vim.diagnostic.severity.HINT] = "󰠠 ",
+					[vim.diagnostic.severity.INFO] = " ",
+				},
+			},
+		})
 
-		-- File operations for neo-tree (nvim-lsp-file-operations); add to all LSP configs
-		local ok, lsp_file_ops = pcall(require, "lsp-file-operations")
-		if ok and lsp_file_ops and lsp_file_ops.default_capabilities then
+		-- ----------------------------------------------------------------------
+		-- Capabilities shared by every server (completion from blink.cmp)
+		-- ----------------------------------------------------------------------
+		local capabilities = vim.lsp.protocol.make_client_capabilities()
+		local ok_blink, blink = pcall(require, "blink.cmp")
+		if ok_blink then
+			capabilities = blink.get_lsp_capabilities(capabilities)
+		end
+		local ok_ops, lsp_file_ops = pcall(require, "lsp-file-operations")
+		if ok_ops then
 			capabilities = vim.tbl_deep_extend("force", capabilities, lsp_file_ops.default_capabilities())
 		end
+		vim.lsp.config("*", { capabilities = capabilities })
 
-		-- Diagnostic signs in the gutter
-		local signs = { Error = " ", Warn = " ", Hint = "󰠠 ", Info = " " }
-		for type, icon in pairs(signs) do
-			local hl = "DiagnosticSign" .. type
-			vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
-		end
-
-		-- Keymaps and server-specific behavior on LSP attach (buffer-local)
+		-- ----------------------------------------------------------------------
+		-- Keymaps on attach (buffer-local)
+		-- ----------------------------------------------------------------------
 		vim.api.nvim_create_autocmd("LspAttach", {
-			group = vim.api.nvim_create_augroup("UserLspConfig", {}),
+			group = vim.api.nvim_create_augroup("cluna_lsp_attach", { clear = true }),
 			callback = function(ev)
 				local client = vim.lsp.get_client_by_id(ev.data.client_id)
 				if not client then
 					return
 				end
-				local opts = { buffer = ev.buf, silent = true }
-				keymap.set("n", "gD", vim.lsp.buf.declaration, { desc = "Go to declaration", unpack(opts) })
-				keymap.set("n", "gd", "<cmd>Telescope lsp_definitions<CR>", { desc = "LSP definitions", unpack(opts) })
-				keymap.set("n", "gi", "<cmd>Telescope lsp_implementations<CR>", { desc = "LSP implementations", unpack(opts) })
-				keymap.set("n", "gt", "<cmd>Telescope lsp_type_definitions<CR>", { desc = "LSP type definitions", unpack(opts) })
-				keymap.set("n", "gR", "<cmd>Telescope lsp_references<CR>", { desc = "LSP references", unpack(opts) })
-				keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, { desc = "Code actions", unpack(opts) })
-				-- Rename: use inc-rename (inline preview) when available, else LSP rename
-				keymap.set("n", "<leader>rn", function()
-					local ok = pcall(require, "inc_rename")
-					if ok then
+				local function map(mode, lhs, rhs, desc)
+					vim.keymap.set(mode, lhs, rhs, { buffer = ev.buf, silent = true, desc = desc })
+				end
+
+				map("n", "gd", "<cmd>Telescope lsp_definitions<CR>", "LSP: definitions")
+				map("n", "gi", "<cmd>Telescope lsp_implementations<CR>", "LSP: implementations")
+				map("n", "gt", "<cmd>Telescope lsp_type_definitions<CR>", "LSP: type definitions")
+				map("n", "gR", "<cmd>Telescope lsp_references<CR>", "LSP: references")
+				map("n", "K", vim.lsp.buf.hover, "LSP: hover")
+				map("n", "gl", vim.diagnostic.open_float, "Line diagnostics")
+				map("n", "[d", function()
+					vim.diagnostic.jump({ count = -1, float = true })
+				end, "Previous diagnostic")
+				map("n", "]d", function()
+					vim.diagnostic.jump({ count = 1, float = true })
+				end, "Next diagnostic")
+				map({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, "Code action")
+				map("n", "<leader>rn", function()
+					if pcall(require, "inc_rename") then
 						vim.cmd("IncRename " .. vim.fn.expand("<cword>"))
 					else
 						vim.lsp.buf.rename()
 					end
-				end, { desc = "Rename (inline preview)", unpack(opts) })
-				keymap.set("n", "<leader>d", vim.diagnostic.open_float, { desc = "Line diagnostics", unpack(opts) })
-				keymap.set("n", "<leader>D", "<cmd>Telescope diagnostics bufnr=0<CR>", { desc = "Buffer diagnostics", unpack(opts) })
-				keymap.set("n", "[d", vim.diagnostic.goto_prev, { desc = "Prev diagnostic", unpack(opts) })
-				keymap.set("n", "]d", vim.diagnostic.goto_next, { desc = "Next diagnostic", unpack(opts) })
-				keymap.set("n", "K", vim.lsp.buf.hover, { desc = "Hover", unpack(opts) })
-				keymap.set("n", "<leader>rs", "<cmd>LspRestart<CR>", { desc = "Restart LSP", unpack(opts) })
-				-- Svelte: notify server on TS/JS file changes (replaces old on_attach)
-				if client.name == "svelte" then
-					vim.api.nvim_create_autocmd("BufWritePost", {
-						group = vim.api.nvim_create_augroup("SvelteTsJsNotify", { clear = false }),
-						pattern = { "*.js", "*.ts" },
-						callback = function(ctx)
-							client.notify("$/onDidChangeTsOrJsFile", { uri = vim.uri_from_fname(ctx.file) })
-						end,
-					})
+				end, "Rename symbol")
+				map("n", "<leader>rs", "<cmd>LspRestart<CR>", "Restart LSP")
+
+				-- Inlay hints: native (replaces lsp-inlayhints.nvim); on by default when supported
+				if client:supports_method("textDocument/inlayHint") then
+					vim.lsp.inlay_hint.enable(true, { bufnr = ev.buf })
 				end
+				map("n", "<leader>uh", function()
+					local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = ev.buf })
+					vim.lsp.inlay_hint.enable(not enabled, { bufnr = ev.buf })
+				end, "Toggle inlay hints")
 			end,
 		})
 
-		-- Server configs: register with vim.lsp.config, enable only if executable is in PATH (see :help lspconfig-nvim-0.11)
+		-- ----------------------------------------------------------------------
+		-- Servers (installed by Mason — see mason.lua). Keys = lspconfig names.
+		-- ----------------------------------------------------------------------
 		local servers = {
-			-- Shell: bash-language-server; covers .sh and .bash (install via Mason or: npm i -g bash-language-server)
-			bashls = {
-				filetypes = { "sh", "bash" },
+			-- Python: pyright for types/navigation, ruff for lint + import sorting + fixes
+			pyright = {
+				settings = { python = { analysis = { typeCheckingMode = "basic" } } },
 			},
-			cssls = {},
-			dockerls = {},
-			eslint = {},
-			gopls = {},
-			html = {},
-			jsonls = {},
-			-- Lua: lua_ls (sumneko); Neovim config and general Lua (install via Mason or system)
+			ruff = {},
+			-- Lua (this config)
 			lua_ls = {
-				filetypes = { "lua" },
 				settings = {
 					Lua = {
-						diagnostics = { globals = { "vim" } },
 						completion = { callSnippet = "Replace" },
 						workspace = { checkThirdParty = false },
 					},
 				},
 			},
-			marksman = {},
-			pyright = {},
-			tailwindcss = {},
+			-- Shell
+			bashls = { filetypes = { "sh", "bash", "zsh" } },
+			-- Infra / config
 			terraformls = {},
+			dockerls = {},
 			yamlls = {},
-			clangd = {},
-			sqlls = {},
-			emmet_ls = {
-				filetypes = { "html", "typescriptreact", "javascriptreact", "css", "sass", "scss", "less", "svelte" },
-			},
-			svelte = {},
-			astro = {},
-			volar = {},
-			graphql = {
-				filetypes = { "graphql", "gql", "svelte", "typescriptreact", "javascriptreact" },
-			},
-			r_language_server = {},
-			ltex = {},        -- LaTeX/markdown grammar/spell; install ltex-ls or omit from list
-			ansiblels = {},   -- Ansible; install ansible-language-server or omit
-			lemminx = {},     -- XML; install lemminx or omit
-			groovyls = {},    -- Groovy; install groovyls or omit
+			jsonls = {},
+			taplo = {}, -- TOML
+			-- Data
+			sqls = {}, -- Go binary; sqlls (sql-language-server) crashes on Node 24
+			-- Docs / web
+			marksman = {}, -- Markdown
+			html = {},
+			cssls = {},
 		}
 
-		for server, custom in pairs(servers) do
-			local config = vim.tbl_extend("keep", custom, { capabilities = capabilities })
-			vim.lsp.config(server, config)
-			-- Only enable if the server's cmd is available (nvim-lspconfig provides default configs with cmd)
-			local resolved = vim.lsp.config[server]
-			local cmd = resolved and resolved.cmd and resolved.cmd[1]
-			if type(cmd) == "string" and vim.fn.executable(cmd) == 1 then
-				vim.lsp.enable(server)
-			end
+		for name, cfg in pairs(servers) do
+			vim.lsp.config(name, cfg)
+			vim.lsp.enable(name)
 		end
 	end,
 }

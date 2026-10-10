@@ -19,15 +19,21 @@ return {
 		"nvim-tree/nvim-web-devicons",
 	},
 	keys = {
-		{ "<leader>ra", "<cmd>AerialToggle!<CR>",                         desc = "Aerial: toggle outline sidebar" },
-		{ "<leader>rA", function() require("telescope").extensions.aerial.aerial() end, desc = "Aerial: Telescope symbol search" },
+		{ "<leader>ra", "<cmd>AerialToggle!<CR>", desc = "Aerial: toggle outline sidebar" },
+		{
+			"<leader>rA",
+			function()
+				require("telescope").extensions.aerial.aerial()
+			end,
+			desc = "Aerial: Telescope symbol search",
+		},
 	},
 	opts = {
 		-- Prefer LSP symbols; fall back to treesitter
 		backends = { "lsp", "treesitter", "markdown", "asciidoc", "man" },
 
 		layout = {
-			max_width = { 40, 0.2 },   -- 40 cols or 20% of window width
+			max_width = { 40, 0.2 }, -- 40 cols or 20% of window width
 			min_width = 20,
 			default_direction = "right",
 			placement = "window",

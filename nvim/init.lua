@@ -2,24 +2,22 @@
 -- init.lua — Neovim entry point
 -- ------------------------------------------------------------------------------
 -- What it does:
---   Loads core (options + keymaps) then lazy.nvim, which loads all specs from
---   lua/cluna/plugins/. Leader is Space; pane navigation is Ctrl-h/j/k/l (vim-tmux-navigator).
+--   Loads core (options + keymaps) then lazy.nvim, which loads every spec in
+--   lua/cluna/plugins/. Leader is <Space>.
 --
 -- How to interact:
---   Config lives in this repo under nvim/; symlink: ~/.config/nvim → repo.
---   Add plugins: create a new .lua in lua/cluna/plugins/ returning a lazy spec.
---   Keymaps: see lua/cluna/core/keymaps.lua and each plugin file; full list in docs/CHEATSHEET.md.
+--   Config lives in the sys-config repo under nvim/ (~/.config/nvim is a symlink).
+--   Add a plugin: create lua/cluna/plugins/<name>.lua returning a lazy spec.
+--   Keymaps: lua/cluna/core/keymaps.lua + each plugin file; full list: docs/KEYS.md.
 --
--- Author: Casey A. Thayer
 -- Location: ~/.config/nvim/init.lua
 -- ------------------------------------------------------------------------------
 
--- Core: options (UI, tabs, search, clipboard, etc.) and keymaps (leader, windows, tabs)
-require("cluna.core")
+-- Providers we never use — silences :checkhealth warnings and skips their probes
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_ruby_provider = 0
+vim.g.loaded_node_provider = 0
+vim.g.loaded_python3_provider = 0
 
--- Plugins: lazy.nvim loads everything in lua/cluna/plugins/
-require("cluna.lazy")
-
--- Optional: Python host for plugins that need Python (e.g. some legacy ones).
--- Create with: python3 -m venv ~/.venvs/global && ~/.venvs/global/bin/pip install neovim
-vim.g.python3_host_prog = vim.fn.expand("~/.venvs/global/bin/python3")
+require("cluna.core") -- options + keymaps
+require("cluna.lazy") -- plugin manager + all plugin specs
