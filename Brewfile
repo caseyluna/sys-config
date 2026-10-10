@@ -14,7 +14,7 @@
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
-# Taps
+# Taps (setup.sh runs `brew trust` on each — Homebrew 6 refuses untrusted taps)
 # ------------------------------------------------------------------------------
 tap "dagger/tap"              # Dagger CI/CD pipeline tool
 tap "hashicorp/tap"           # Official Terraform builds (core formula is stale/removed)

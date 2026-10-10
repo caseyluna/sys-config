@@ -156,6 +156,12 @@ if [[ $DO_BREW -eq 1 ]]; then
   for prefix in /opt/homebrew /usr/local /home/linuxbrew/.linuxbrew; do
     [[ -x "$prefix/bin/brew" ]] && { eval "$("$prefix/bin/brew" shellenv)"; break; }
   done
+  # Homebrew >= 6 refuses formulae from third-party taps until they're trusted
+  if brew trust --help &>/dev/null; then
+    for tap in $(grep -E '^tap "' "$REPO/Brewfile" | cut -d'"' -f2); do
+      brew trust "$tap" >/dev/null 2>&1 && log "trusted tap: $tap"
+    done
+  fi
   log "brew bundle (no upgrades of already-installed packages)..."
   brew bundle --no-upgrade --file="$REPO/Brewfile"
 else
