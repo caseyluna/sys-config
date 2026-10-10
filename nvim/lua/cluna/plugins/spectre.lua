@@ -6,7 +6,7 @@
 --   applied per-match, per-file, or all at once. Supports regex and plain text,
 --   case sensitivity, and file-type filters.
 -- Keymaps:
---   <leader>S   — open Spectre (project-wide search)
+--   <leader>SS  — open Spectre (project-wide search)
 --   <leader>Sw  — search current word across project
 --   <leader>Sf  — search in current file only
 -- Notes: Requires ripgrep (rg) and sed/oxi-replace for substitutions.
@@ -19,7 +19,7 @@ return {
 	cmd = "Spectre",
 	keys = {
 		{
-			"<leader>S",
+			"<leader>SS",
 			function()
 				require("spectre").toggle()
 			end,

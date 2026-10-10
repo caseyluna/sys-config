@@ -14,3 +14,6 @@ tmux/.tmux/
 # Claude Code account-synced skills are state, not config (written into the
 # repo because claude/skills is symlinked to ~/.claude/skills)
 claude/skills/synced/
+
+# Written by copilot.lua when nvim runs with XDG_CONFIG_HOME=repo (lint.sh) — holds auth
+github-copilot/

@@ -1,6 +1,8 @@
 # ------------------------------------------------------------------------------
 # Lint config on every push / PR (syntax + load checks; no full install).
-# Runs scripts/lint.sh. See docs/TESTING.md.
+# Runs scripts/lint.sh (incl. docs coverage). See docs/TESTING.md.
+# workflow_dispatch: pr-autofix.yml re-runs this after pushing fix/docs commits
+# (pushes made with GITHUB_TOKEN don't trigger push/pull_request events).
 # ------------------------------------------------------------------------------
 name: Lint
 
@@ -8,6 +10,7 @@ on:
   push:
     branches: [main, dev]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   lint:

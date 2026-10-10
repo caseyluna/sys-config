@@ -180,9 +180,6 @@ return {
 			},
 		}
 
-		-- VS Code parity: pick up .vscode/launch.json if the repo has one
-		pcall(function()
-			require("dap.ext.vscode").load_launchjs(nil, { python = { "python" } })
-		end)
+		-- VS Code parity: nvim-dap reads .vscode/launch.json on demand by itself
 	end,
 }

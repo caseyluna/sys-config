@@ -3,7 +3,7 @@
 -- ------------------------------------------------------------------------------
 -- What it does: Mark the files you're working on and jump between them with
 --   one key. Marks are per project (cwd).
--- Keymaps: <leader>a add file · <leader>1-4 jump to mark · <leader>am menu
+-- Keymaps: <leader>aa add file · <leader>1-4 jump to mark · <leader>am menu
 -- ------------------------------------------------------------------------------
 
 return {
@@ -12,7 +12,7 @@ return {
 	dependencies = { "nvim-lua/plenary.nvim" },
 	keys = {
 		{
-			"<leader>a",
+			"<leader>aa",
 			function()
 				require("harpoon"):list():add()
 			end,
