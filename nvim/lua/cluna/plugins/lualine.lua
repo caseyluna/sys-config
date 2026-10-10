@@ -28,7 +28,7 @@ return {
 
 		return {
 			options = {
-				theme = "catppuccin",
+				theme = "catppuccin-nvim", -- follows the active flavor (catppuccin#979 renamed it)
 				globalstatus = true,
 				component_separators = { left = "", right = "" },
 				section_separators = { left = "", right = "" },
