@@ -131,8 +131,6 @@ brew "llvm"                   # clang toolchain for native builds
 # ------------------------------------------------------------------------------
 cask "ghostty"
 cask "font-jetbrains-mono-nerd-font"
-cask "font-hack-nerd-font"
-cask "font-iosevka"
 
 # ------------------------------------------------------------------------------
 # AI tooling
@@ -143,7 +141,6 @@ cask "claude-code"            # Claude Code CLI (config in claude/, linked by se
 # GUI apps
 # ------------------------------------------------------------------------------
 cask "notion"
-cask "sublime-text"
 cask "tuple"
 cask "zoom"
 cask "dockfix"

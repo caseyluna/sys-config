@@ -117,7 +117,7 @@ do_links() {
   link_file "$REPO/claude/agents"          "$HOME/.claude/agents"
 
   # Stale links from older versions of this repo
-  for stale in "$HOME/.zshprofile" "$HOME/.p10k.zsh" "$HOME/.fzf" "$HOME/.config/kitty"; do
+  for stale in "$HOME/.zshprofile" "$HOME/.p10k.zsh" "$HOME/.fzf"; do
     if [[ -L "$stale" && "$(readlink "$stale")" == "$REPO"* ]]; then
       log "CLEAN  removing stale link $stale"
       rm -f "$stale"

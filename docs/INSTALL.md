@@ -61,7 +61,7 @@ Source of truth: `do_links()` in `setup.sh`. Keep this table identical.
 | `~/.claude/skills` | `claude/skills/` |
 | `~/.claude/agents` | `claude/agents/` |
 
-Deliberately **not** linked: `~/.tmux` (plugin state), `~/.claude` as a whole (sessions, history, auth), `~/.claude.json`, `~/.fzf` (fzf's own `fzf --zsh` is sourced instead). Stale links from older versions (`~/.zshprofile`, `~/.p10k.zsh`, `~/.fzf`, `~/.config/kitty`) are removed automatically.
+Deliberately **not** linked: `~/.tmux` (plugin state), `~/.claude` as a whole (sessions, history, auth), `~/.claude.json`, `~/.fzf` (fzf's own `fzf --zsh` is sourced instead). Stale links from older versions (`~/.zshprofile`, `~/.p10k.zsh`, `~/.fzf`) are removed automatically.
 
 ## Verify
 
