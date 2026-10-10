@@ -10,3 +10,7 @@
 
 # tmux plugins are installed by TPM into ~/.tmux/plugins — never tracked
 tmux/.tmux/
+
+# Claude Code account-synced skills are state, not config (written into the
+# repo because claude/skills is symlinked to ~/.claude/skills)
+claude/skills/synced/

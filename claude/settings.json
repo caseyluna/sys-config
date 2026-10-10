@@ -1,9 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "model": "claude-fable-5-1[1m]",
-  "tui": "fullscreen",
   "permissions": {
-    "defaultMode": "auto",
     "allow": [
       "Bash(git status:*)",
       "Bash(git diff:*)",
@@ -65,18 +62,19 @@
       "Bash(rm -rf ~:*)",
       "Bash(terraform apply:*)",
       "Bash(terraform destroy:*)"
-    ]
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "$HOME/.claude/statusline.sh"
+    ],
+    "defaultMode": "auto"
   },
   "hooks": {
     "PostToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
-          { "type": "command", "command": "$HOME/.claude/hooks/format.sh", "timeout": 30 }
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/format.sh",
+            "timeout": 30
+          }
         ]
       }
     ],
@@ -84,9 +82,18 @@
       {
         "matcher": "",
         "hooks": [
-          { "type": "command", "command": "$HOME/.claude/hooks/notify.sh", "timeout": 10 }
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/notify.sh",
+            "timeout": 10
+          }
         ]
       }
     ]
-  }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "$HOME/.claude/statusline.sh"
+  },
+  "tui": "fullscreen"
 }
