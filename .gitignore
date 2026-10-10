@@ -17,3 +17,6 @@ claude/skills/synced/
 
 # Written by copilot.lua when nvim runs with XDG_CONFIG_HOME=repo (lint.sh) — holds auth
 github-copilot/
+
+# Claude Code worktrees (agent isolation) — local state
+.claude/worktrees/
