@@ -56,8 +56,8 @@ Same idea as macOS: the **Brewfile is the toolchain on every OS** (Homebrew on L
 | Docker | `docker-desktop` cask | `moby-engine` / `docker.io` + compose + buildx, service enabled, you in group `docker` (re-login) |
 | gcloud / bq | `gcloud-cli` cask | `google-cloud-cli` from Google's dnf/apt repo |
 | Ghostty | cask | Fedora: COPR `scottames/ghostty` · Ubuntu: `snap install ghostty --classic` (desktop only) |
-| Nerd Fonts | font casks | JetBrainsMono + Hack → `~/.local/share/fonts/NerdFonts` (desktop only) |
-| DBeaver / Sublime / Zoom | casks | Flathub, per user (desktop only) · Notion, Tuple, DockFix: no Linux build |
+| Nerd Fonts | `font-jetbrains-mono-nerd-font` cask | JetBrainsMono → `~/.local/share/fonts/NerdFonts` (desktop only) |
+| DBeaver / Zoom | casks | Flathub, per user (desktop only) · Notion, Tuple, DockFix: no Linux build |
 | Claude Code | `claude-code` cask | native installer → `~/.local/bin/claude` (setup step 9) |
 
 macOS-only entries sit in `if OS.mac?` blocks in the `Brewfile`. Adding a cask? Put its Linux twin in both distro scripts (Flathub id → `FLATPAKS` in `scripts/linux/lib.sh`).

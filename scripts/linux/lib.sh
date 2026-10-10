@@ -15,11 +15,10 @@
 # Flathub twins of the Brewfile GUI casks (no Linux build: notion, tuple, dockfix)
 FLATPAKS=(
   io.dbeaver.DBeaverCommunity # cask dbeaver-community
-  com.sublimetext.three       # cask sublime-text
   us.zoom.Zoom                # cask zoom
 )
 # Nerd Fonts release archives (ghostty/config uses JetBrainsMono Nerd Font)
-NERD_FONTS=(JetBrainsMono Hack)
+NERD_FONTS=(JetBrainsMono) # twin of cask font-jetbrains-mono-nerd-font
 
 log() { echo "[linux] $*"; }
 step() {
@@ -97,7 +96,7 @@ install_flatpaks() {
   fi
   # --user: no sudo/polkit prompts, apps live in ~/.local/share/flatpak
   flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-  # One at a time: an app missing for this arch (Sublime is x86_64-only) must not block the rest
+  # One at a time: an app missing for this arch (some are x86_64-only) must not block the rest
   local app
   for app in "${FLATPAKS[@]}"; do
     flatpak install --user -y --noninteractive flathub "$app" || log "flatpak $app: not available here — skipped"
