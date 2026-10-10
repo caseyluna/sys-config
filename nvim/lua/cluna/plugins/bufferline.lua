@@ -1,8 +1,11 @@
 -- ------------------------------------------------------------------------------
 -- bufferline.nvim (akinsho/bufferline.nvim) — Open buffers as tabs at the top
 -- ------------------------------------------------------------------------------
--- Keymaps: ]b / [b next / previous buffer · <leader>bd close buffer (snacks.lua)
--- Notes: <Tab> is NOT used here — it is <C-i> (jumplist forward) in Vim.
+-- Keymaps: <Tab> / <S-Tab> or ]b / [b next / previous buffer · <leader>bd close
+--   buffer (snacks.lua)
+-- Notes: <Tab> and <C-i> (jumplist forward) are separate keys only because
+--   Ghostty + tmux `extended-keys` send CSI u; without that, <Tab> would
+--   shadow <C-i>.
 -- ------------------------------------------------------------------------------
 
 return {
@@ -11,6 +14,8 @@ return {
 	event = "VeryLazy",
 	dependencies = { "nvim-tree/nvim-web-devicons" },
 	keys = {
+		{ "<Tab>", "<cmd>BufferLineCycleNext<CR>", desc = "Next buffer" },
+		{ "<S-Tab>", "<cmd>BufferLineCyclePrev<CR>", desc = "Previous buffer" },
 		{ "]b", "<cmd>BufferLineCycleNext<CR>", desc = "Next buffer" },
 		{ "[b", "<cmd>BufferLineCyclePrev<CR>", desc = "Previous buffer" },
 		{ "<leader>bp", "<cmd>BufferLineTogglePin<CR>", desc = "Pin buffer" },
