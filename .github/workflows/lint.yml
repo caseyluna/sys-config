@@ -1,25 +1,31 @@
 # ------------------------------------------------------------------------------
-# Lint configs on push/PR — zsh syntax, bash syntax, tmux config, nvim load.
-# Runs scripts/lint.sh. Uses macos-latest so zsh is available natively.
-# validate.sh is intentionally omitted — it checks live ~ symlinks.
+# Lint config on every push / PR (syntax + load checks; no full install).
+# Runs scripts/lint.sh (incl. docs coverage). See docs/TESTING.md.
+# workflow_dispatch: pr-autofix.yml re-runs this after pushing fix/docs commits
+# (pushes made with GITHUB_TOKEN don't trigger push/pull_request events).
 # ------------------------------------------------------------------------------
 name: Lint
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   lint:
-    runs-on: macos-latest
-
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: brew install neovim tmux shellcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zsh tmux neovim shellcheck ruby
 
-      - name: Run lint.sh
+      # Brewfile is Ruby (OS.mac? blocks) — a syntax error breaks bootstrap everywhere
+      - name: Brewfile syntax
+        run: ruby -c Brewfile
+
+      - name: Run lint
         run: bash scripts/lint.sh

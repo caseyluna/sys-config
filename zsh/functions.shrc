@@ -1,300 +1,766 @@
-zdbb() {
-  cd $HOME/zelus/basketball
-  DIR=$(find * -maxdepth 0 -type d -print 2>/dev/null | fzf-tmux) &&
-    cd "$DIR"
-}
-zdg() {
-  cd $HOME/zelus/general
-  DIR=$(find * -maxdepth 0 -type d -print 2>/dev/null | fzf-tmux) &&
-    cd "$DIR"
-}
-zdes() {
-  cd $HOME/zelus/esports
-  DIR=$(find * -maxdepth 0 -type d -print 2>/dev/null | fzf-tmux) &&
-    cd "$DIR"
-}
-zdfb() {
-  cd $HOME/zelus/football
-  DIR=$(find * -maxdepth 0 -type d -print 2>/dev/null | fzf-tmux) &&
-    cd "$DIR"
-}
-zgcp() {
-  PROJECT=$(gcloud config configurations list --format json | jq -r ".[] | .name" | fzf-tmux)
-  gcloud config configurations activate "$PROJECT"
-}
-model-dev-tag() {
-  GIT_TIMESTAMP=$(date -u "+%Y%m%d.%H%M%S")
-  if [[ $# -eq 2 ]]; then
-    echo "Tagging and pushing with dev-$1/cthayer/$2-$GIT_TIMESTAMP"
-    sleep 3
-    git tag dev-$1/cthayer/$2-$GIT_TIMESTAMP
-    git push origin dev-$1/cthayer/$2-$GIT_TIMESTAMP
-  else
-    echo "Error: requires exactly two arguments"
+# ------------------------------------------------------------------------------
+# functions.shrc — Shell functions (GCP, BigQuery, Git, Cloud SQL)
+# ------------------------------------------------------------------------------
+# What it does:
+#   Defines callable functions: gcpp (switch gcloud config), query-gcp (BigQuery
+#   with cost check), bigquery (open BQ UI), delete_branches (interactive branch
+#   cleanup), phil-db-up/down/status/switch (Cloud SQL proxy + MySQL).
+#
+# How to interact:
+#   Sourced from .zshrc at startup. Edit in repo (zsh/functions.shrc); reload
+#   with: source ~/.zshrc. Each function has a USAGE/DESCRIPTION block above it.
+#
+# Author: Casey Luna
+# Location: ~/.functions.shrc (symlinked from repo)
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# 🎨 Color Constants (for consistent log styling)
+# ------------------------------------------------------------------------------
+COLOR_RESET="\033[0m"
+COLOR_RED="\033[1;31m"
+COLOR_GREEN="\033[1;32m"
+COLOR_YELLOW="\033[1;33m"
+COLOR_BLUE="\033[1;34m"
+COLOR_CYAN="\033[1;36m"
+COLOR_GRAY="\033[0;90m"
+
+# ------------------------------------------------------------------------------
+# Logging Helpers (color + emoji toggle via LOG_MODE)
+# ------------------------------------------------------------------------------
+LOG_MODE=${LOG_MODE:-fancy}
+
+log_info() { [[ "$LOG_MODE" == "fancy" ]] && echo -e "ℹ️  ${COLOR_BLUE}[INFO]${COLOR_RESET} $1" || echo "[INFO] $1"; }
+log_warn() { [[ "$LOG_MODE" == "fancy" ]] && echo -e "⚠️  ${COLOR_YELLOW}[WARN]${COLOR_RESET} $1" || echo "[WARN] $1"; }
+log_error() { [[ "$LOG_MODE" == "fancy" ]] && echo -e "❌ ${COLOR_RED}[ERROR]${COLOR_RESET} $1" || echo "[ERROR] $1"; }
+log_ok() { [[ "$LOG_MODE" == "fancy" ]] && echo -e "✅ ${COLOR_GREEN}[OK]${COLOR_RESET} $1" || echo "[OK] $1"; }
+log_prompt() { [[ "$LOG_MODE" == "fancy" ]] && echo -e "❓ ${COLOR_YELLOW}[PROMPT]${COLOR_RESET} $1" || echo "[PROMPT] $1"; }
+
+# ------------------------------------------------------------------------------
+# 🛰️ gcp: Interactively switch between gcloud CLI configurations
+# ------------------------------------------------------------------------------
+# USAGE:
+#   gcp
+#
+# DESCRIPTION:
+#   Lists all saved gcloud configurations and allows you to select one
+#   using fzf. Activates the selected configuration.
+#
+# REQUIREMENTS:
+#   - gcloud CLI must be installed
+#   - jq must be installed
+#   - fzf (or fzf-tmux) must be installed
+#
+# EXAMPLES:
+#   gcp
+# ------------------------------------------------------------------------------
+
+gcpp() {
+  # 📦 Confirm dependencies are installed
+  command -v gcloud >/dev/null || {
+    log_error "gcloud CLI not found."
+    return 1
+  }
+  command -v fzf >/dev/null || {
+    log_error "fzf not found."
+    return 1
+  }
+
+  # ☁️ Fetch live project list from gcloud and let the user pick with fzf
+  log_info "Fetching GCP projects..."
+  local project_id
+  project_id="$(gcloud projects list --format="value(projectId)" 2>/dev/null | fzf --prompt="Select project: ")"
+
+  # ❌ Exit if nothing selected
+  if [[ -z "$project_id" ]]; then
+    log_warn "No project selected. Aborting."
+    return
   fi
+
+  # ✅ Activate the selected project
+  log_info "Setting GCP project: $project_id"
+  gcloud config set project "$project_id"
+  log_ok "Set GCP project to: '$project_id'"
 }
+
+# ------------------------------------------------------------------------------
+# 📝 glogone: Show recent Git commits in one-line format
+# ------------------------------------------------------------------------------
+# USAGE:
+#   glogone [number_of_commits]
+#
+# DESCRIPTION:
+#   Shows the last N Git commits using compact --oneline log format.
+#   Defaults to 10 commits if no argument is passed.
+#
+# REQUIREMENTS:
+#   - Git must be installed
+#
+# EXAMPLES:
+#   glogone
+#   glogone 20
+# ------------------------------------------------------------------------------
 glogone() {
-  DEFAULT=10
-  NUM_COMMITS="${1:-$DEFAULT}"
-  git --no-pager log --oneline -n $NUM_COMMITS
-}
-killpods() {
-  # app=bkrdp-ss, bkrdp-ngss, bkie
-  # model=basketball-adjusted-plus-minus
-  kubectl delete pods -l $1
-}
-killjobs() {
-  # app=bkrdp-ss, bkrdp-ngss, bkie
-  # model=basketball-adjusted-plus-minus
-  kubectl delete jobs -l $1
-}
-wpod() {
-  # Arg $1 - seconds to refresh
-  # Arg $2 - part of pod name to grep
-
-  watch -n $1 "kubectl get pod | grep $2"
-}
-wjob() {
-  watch -n $1 "kubectl get job | grep $2"
-}
-zmvbbd() {
-  kubectl port-forward svc/zelus-model-versioner -n zelus-model-versioner :80 | cloud_sql_proxy -instances=zelus-basketball-dev:us-central1:basketball-data=tcp:5432
-}
-dev-tag() {
-  # Arg $1 - sport name
-  # Arg $2 - dev tag label typically a JIRA ticket number
-
-  GIT_TIMESTAMP=$(date -u "+%Y%m%d.%H%M%S")
-  if [[ $# -eq 2 ]]; then
-    echo "Tagging and pushing with dev-$1-ct-$2-$GIT_TIMESTAMP"
-    sleep 3
-    git tag dev-$1-ct-$2-$GIT_TIMESTAMP
-    git push origin dev-$1-ct-$2-$GIT_TIMESTAMP
-  else
-    echo "Error: requires exactly two argument"
-  fi
-}
-release-tag() {
-  # Arg $1 - commit SHA to be release tagged
-  # Arg $2 - release number
-  echo "Checking out and pulling main branch"
-  git checkout main
-  git pull
-
-  echo "Checking out commit: $1"
-  git checkout $1
-  git pull origin $1
-
-  GIT_TIMESTAMP=$(date -u "+%Y%m%d.%H%M%S")
-  SPORT=basketball
-  RELEASE=$2
-
-  echo "Sport: $SPORT; Release: $RELEASE; Timestamp: $GIT_TIMESTAMP"
-  echo "Tagging and pushing"
-  git tag release-$SPORT-$RELEASE-$GIT_TIMESTAMP
-  git push origin release-$SPORT-$RELEASE-$GIT_TIMESTAMP
-  echo "Release tag complete"
-}
-
-# delete all branches merged into main
-dam() {
-  echo "=== Deleting all branches (besides main and dev-basketball) ==="
-  git checkout main && git branch | egrep -v "(^\*|main)" | egrep -v "(^\*|dev-basketball)" | xargs git branch -D
-  echo "☑️  Done!"
-}
-
-# create a new branch
-function nb() {
-  if [[ $# -eq 0 ]]; then
-    echo "Usage: new_branch <jira-ticket>"
+  # 📦 Confirm dependencies are installed
+  command -v git >/dev/null || {
+    log_error "Git not found."
     return 1
-  fi
+  }
 
-  local jira_ticket=$1
-  local branch_name="casey/${jira_ticket}"
+  # 🔢 Use passed number or fall back to default of 10
+  local DEFAULT=10
+  local NUM_COMMITS="${1:-$DEFAULT}"
 
-  # check if branch already exists
-  if git rev-parse --git-dir >/dev/null 2>&1; then
-    # create and switch to new branch
-    git checkout -b "$branch_name"
-    echo "Created new branch: $branch_name"
+  # 🧾 Show the log output
+  log_info "Showing last $NUM_COMMITS commits..."
+  git --no-pager log --oneline -n "$NUM_COMMITS"
+}
 
-    # push the new branch to remote
-    git push -u origin "$branch_name"
-    echo "Pushed new branch to remote: $branch_name"
-  else
-    echo "This command must be run in a git repo"
+# ------------------------------------------------------------------------------
+# 🔍 query-gcp: Run a BigQuery SQL query with cost confirmation
+# ------------------------------------------------------------------------------
+# USAGE:
+#   query-gcp "SELECT * FROM dataset.table LIMIT 10"
+#
+# DESCRIPTION:
+#   Runs a dry-run BigQuery query to estimate bytes scanned and cost,
+#   confirms the project context, then optionally runs the full query.
+#
+# REQUIREMENTS:
+#   - bq CLI must be installed
+#   - jq and bc must be installed
+#   - Active gcloud project must be set
+#
+# EXAMPLES:
+#   query-gcp "SELECT COUNT(*) FROM my_dataset.my_table"
+# ------------------------------------------------------------------------------
+query-gcp() {
+
+  # 📦 Confirm dependencies are installed
+  command -v bq >/dev/null || {
+    log_error "bq CLI not found."
     return 1
-  fi
-}
-
-# create commit message including jira ticket ID from branch name
-gcj() {
-  # Ensure we're inside a Git repository
-  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    echo "This command must be run in a git repository."
+  }
+  command -v jq >/dev/null || {
+    log_error "jq not found."
     return 1
-  fi
+  }
+  command -v awk >/dev/null || {
+    log_error "awk not found."
+    return 1
+  }
 
-  # Extract the JIRA ticket ID from the current branch name
-  local branch_name=$(git rev-parse --abbrev-ref HEAD)
-  local jira_ticket=$(echo "$branch_name" | grep -oE '[A-Za-z]+-\d+' | head -n 1)
-
-  if [[ -z $jira_ticket ]]; then
-    echo "No JIRA ticket ID found in the branch name. Committing without JIRA ticket ID."
-    git commit -m "$1"
-  else
-    local full_message="[$jira_ticket] $1"
-    git commit -m "$full_message"
-  fi
-}
-
-# combined git add and git commit
-gagc() {
-  git add .
-  gc "$1"
-}
-
-# bigquery query
-function query-gcp() {
-  # Define colors
-  local RED="\033[0;31m"
-  local GREEN="\033[0;32m"
-  local NO_COLOR="\033[0m"
-
-  # Accept the SQL query as a parameter
+  # 📥 Accept query string as input
   local query="$1"
+
+  # ❌ Check that query was passed
   if [[ -z "$query" ]]; then
-    echo "Please provide a SQL query as an argument."
+    log_error "Please provide a SQL query as an argument."
     return 1
   fi
 
-  # Step 1: Print the current GCP project
+  # 📍 Get active GCP project
   local current_project=$(gcloud config get-value project 2>/dev/null)
-  echo "Current GCP Project: ${RED}$current_project${NO_COLOR}"
+  log_info "Current GCP Project: ${COLOR_RED}$current_project${COLOR_RESET}"
+
+  # ✅ Confirm it's the right project
   read "response?Is this the project you want to query? (y/n) "
-  if [[ "$response" != "y" ]]; then
-    echo "Exiting..."
-    return 1
-  fi
+  [[ "$response" != "y" ]] && log_info "Exiting..." && return 1
 
-  # Step 2: Calculate the cost and size of the query
-  echo "Calculating cost and size of the query..."
+  # 💡 Run query as dry run to check cost
+  log_info "Dry-running query to estimate cost..."
   local dry_run_output=$(bq query --use_legacy_sql=false --dry_run --format=prettyjson "$query" 2>&1)
-  local query_cost=$(echo "$dry_run_output" | jq '.statistics.query.totalBytesProcessed | tonumber' 2>/dev/null)
+  local query_cost=$(jq -r '.statistics.query.totalBytesProcessed // empty' <<<"$dry_run_output")
 
-  if [[ -z "$query_cost" || "$query_cost" == "null" ]]; then
-    echo "Failed to calculate query cost. Error was:"
-    echo "$dry_run_output"
+  # ❗ Handle parse error
+  if [[ -z "$query_cost" ]]; then
+    log_error "Failed to calculate query cost. Output was:\n$dry_run_output"
     return 1
   fi
 
-  local cost_in_gb=$(bc <<<"scale=2; $query_cost / 1024 / 1024 / 1024")
-  local estimated_cost=$(bc <<<"scale=2; $cost_in_gb * 0.01") # Assuming $0.01 per GB
-  echo "${GREEN}Estimated cost: \$${estimated_cost} USD${NO_COLOR}"
-  echo "Data processed: ${cost_in_gb} GB"
+  # 🧮 Estimate cost and display
+  local cost_in_gb=$(awk "BEGIN { printf \"%.2f\", $query_cost/(1024*1024*1024) }")
+  local estimated_cost=$(awk "BEGIN { printf \"%.2f\", $cost_in_gb * 0.01 }")
+  log_info "Data processed: ${COLOR_CYAN}${cost_in_gb} GB${COLOR_RESET} | Estimated cost: ${COLOR_GREEN}\$${estimated_cost} USD${COLOR_RESET}"
 
-  # Step 3: Ask user if they want to continue
+  # ☑️ Ask to continue
   read "cont?Do you want to continue with this query? (y/n) "
-  if [[ "$cont" != "y" ]]; then
-    echo "Query cancelled."
-    return 1
-  fi
+  [[ "$cont" != "y" ]] && log_info "Query cancelled." && return 1
 
-  # Step 4: Execute the query and print results
-  echo "Executing query..."
+  # 🚀 Run the actual query
+  log_info "Executing query..."
   bq query --use_legacy_sql=false "$query"
 }
 
-# Example usage: query_gcp "SELECT * FROM your_dataset.your_table LIMIT 10"
+# ------------------------------------------------------------------------------
+# 🌐 bigquery: Open BigQuery UI in browser for active project
+# ------------------------------------------------------------------------------
+# USAGE:
+#   bigquery
+#
+# DESCRIPTION:
+#   Confirms your current GCP project and opens the BigQuery console
+#   in Firefox using that project context.
+#
+# REQUIREMENTS:
+#   - macOS: Arc (Phillies profile); Linux: default browser via xdg-open
+#   - gcloud CLI must be configured
+#
+# EXAMPLES:
+#   bigquery
+# ------------------------------------------------------------------------------
+bigquery() {
 
-function bigquery() {
-  # Define colors
-  local RED="\033[0;31m"
-  local NO_COLOR="\033[0m"
+  # 📦 Confirm dependencies are installed
+  command -v open >/dev/null || {
+    log_error "'open' not available."
+    return 1
+  }
 
-  # Get the current GCP project
+  # 📍 Get current GCP project
   local current_project=$(gcloud config get-value project)
-
-  # Check if a project is set
-  if [ -z "$current_project" ]; then
-    echo "No GCP project is currently set."
+  [[ -z "$current_project" ]] && {
+    log_error "No GCP project is currently set."
     return 1
-  fi
+  }
 
-  echo "Opening BigQuery console for ${RED}$current_project${NO_COLOR}"
-  read "response?Is this the project you want to query? (y/n) "
-  if [[ "$response" != "y" ]]; then
-    echo "Exiting..."
+  # ✅ Confirm project with user
+  log_info "Opening BigQuery console for ${COLOR_RED}$current_project${COLOR_RESET}"
+  log_prompt "Is this correct? (y/n) "
+  read -r response
+  [[ "$response" != "y" ]] && {
+    log_info "Exiting..."
     return 1
+  }
+
+  # 🌐 Open browser to BigQuery UI
+  local full_url="https://console.cloud.google.com/bigquery?project=${current_project}&supportedpurview=project&ws=!1m0"
+  if [[ $OSTYPE == darwin* ]]; then
+    open -a "Arc" "$full_url" --args --profile "Phillies"
+  else
+    open "$full_url" # default browser (xdg-open shim)
   fi
-
-  # Define base URL or project-specific URL pattern
-  local base_url="https://console.cloud.google.com/"
-  local full_url="${base_url}bigquery?project=${current_project}&supportedpurview=project&ws=!1m0"
-
-  # Firefox is not running, start it and open the URL
-  open -a firefox "$full_url"
 }
 
-function oncall() {
-  # Open links for on call inspection
-  local looker_dashboard_link="https://lookerstudio.google.com/u/0/reporting/0250a1f8-d774-4bf8-935e-3700fd856765/page/URU7C?s=h6jXziSXFsk"
-  local prd_airflow_link="https://airflow-basketball.prod.zelusanalytics.com/home?tags=incremental"
-  local stg_airflow_link="https://airflow-basketball.stg.zelusanalytics.com/home?tags=incremental"
-  local nba_schedule_link="https://www.nba.com/schedule"
-
-  echo "Opening links for on call inspection..."
-  open -a firefox "$looker_dashboard_link" "$nba_schedule_link" "$prd_airflow_link" "$stg_airflow_link"
-}
-
-# Function to loop through local Git branches and ask for confirmation to delete
+# ------------------------------------------------------------------------------
+# 🧹 delete_branches: Interactively delete local Git branches
+# ------------------------------------------------------------------------------
+# USAGE:
+#   delete_branches
+#
+# DESCRIPTION:
+#   Loops through all local branches except main, displays recent commit info,
+#   and prompts to delete each branch.
+#
+# REQUIREMENTS:
+#   - git must be installed
+#
+# EXAMPLES:
+#   delete_branches
+# ------------------------------------------------------------------------------
 delete_branches() {
-  # Colors
-  RED='\033[0;31m'
-  GREEN='\033[0;32m'
-  YELLOW='\033[0;33m'
-  BLUE='\033[0;34m'
-  NC='\033[0m' # No Color
-
-  # Emojis
-  BRANCH_EMOJI="🌿"
-  INFO_EMOJI="ℹ️"
-  DELETE_EMOJI="🗑️"
-  SKIP_EMOJI="⏭️"
-
-  # Checkout the main branch
-  echo -e "${BLUE}Checking out the main branch...${NC}"
+  # 🏁 Checkout main branch
+  log_info "Checking out the main branch..."
   git checkout main
 
-  # Fetch all local branches into an array
-  branches=($(git branch --format '%(refname:short)'))
+  # 📂 Get list of local branches
+  local branches=($(git branch --format '%(refname:short)' | sort -u))
 
-  # Loop through each branch
+  # 🔁 Loop through branches
   for branch in "${branches[@]}"; do
-    # Skip the main branch
     if [ "$branch" = "main" ]; then
-      echo -e "${SKIP_EMOJI} ${YELLOW}Skipping main branch${NC}"
+      log_info "Skipping main branch"
       continue
     fi
 
-    # Get detailed information about the branch
-    branch_info=$(git log -1 --pretty=format:"%h %an <%ae> %ad%n%s" "$branch")
+    # 📜 Show branch commit info
+    local branch_info=$(git log -1 --pretty=format:"%h %an <%ae> %ad%n%s" "$branch")
+    log_info "Reviewing branch: ${COLOR_BLUE}$branch${COLOR_RESET}"
+    echo "$branch_info"
 
-    # Print branch information
-    echo -e "${BRANCH_EMOJI} ${BLUE}Branch: ${GREEN}$branch${NC}"
-    echo -e "${INFO_EMOJI} ${YELLOW}$branch_info${NC}"
-    echo
-
-    # Ask for confirmation to delete the branch
-    echo -n -e "${DELETE_EMOJI} ${RED}Do you want to delete the branch '$branch'? (y/n) ${NC}"
-    read confirm
+    # ❓ Prompt to delete
+    read -p "Delete '$branch'? (y/n) " confirm
     if [ "$confirm" = "y" ]; then
       git branch -d "$branch"
-      echo -e "${GREEN}Branch '$branch' deleted.${NC}"
+      log_ok "Deleted $branch"
     else
-      echo -e "${YELLOW}Branch '$branch' not deleted.${NC}"
+      log_info "Skipped $branch"
     fi
-    echo
   done
+}
+
+# ------------------------------------------------------------------------------
+# 🔌 phil-db-up: Start Cloud SQL Proxy and connect to MySQL
+# ------------------------------------------------------------------------------
+# USAGE:
+#   phil-db-up <db-name> [additional-db-names...]
+#   phil-db-up --all
+#
+# DESCRIPTION:
+#   Starts a single Cloud SQL Proxy process handling multiple instance sockets,
+#   writes each socket as a <friendly>.sock file, and opens a MySQL session
+#   for a chosen instance. Proxies remain running after exit.
+#
+# REQUIREMENTS:
+#   - cloud-sql-proxy installed & authenticated
+#   - PHIL_DB_PROD_ADMIN_USER and PHIL_DB_PROD_ADMIN_PASS set
+#
+# EXAMPLES:
+#   phil-db-up prod biomech
+#   phil-db-up --all
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# 🔌 phil-db-up: Start Cloud SQL Proxy and connect to MySQL
+# ------------------------------------------------------------------------------
+phil-db-up() {
+  command -v cloud-sql-proxy >/dev/null 2>&1 || {
+    log_error "cloud-sql-proxy not found."
+    return 1
+  }
+  [[ $# -lt 1 ]] && {
+    log_error "Usage: phil-db-up <db-name> [additional-db-names...]"
+    return 1
+  }
+
+  local socket_dir="/tmp/cloudsql"
+  mkdir -p "$socket_dir"
+  local friendlyList=()
+  if [[ "$1" == "--all" ]]; then
+    friendlyList=(prod biomech)
+  else
+    friendlyList=("$@")
+  fi
+
+  map_instance() {
+    case "$1" in
+    prod) echo "phil-new:us-east1:phil-db-prod-v2" ;;
+    biomech) echo "phil-new:us-east1:prod-biomech-v5-1-0" ;;
+    *) echo "" ;;
+    esac
+  }
+
+  # Launch separate proxy for each instance
+  local proxy_pids=()
+  for friendly in "${friendlyList[@]}"; do
+    local inst sock
+    inst=$(map_instance "$friendly")
+    if [[ -z "$inst" ]]; then
+      log_error "Unknown database: $friendly"
+      return 1
+    fi
+    sock="$socket_dir/${friendly}.sock"
+    log_info "Starting proxy for $friendly (socket: $sock)"
+    nohup cloud-sql-proxy --unix-socket="$sock" "$inst" >/dev/null 2>&1 &
+    proxy_pids+=("$!")
+    sleep 1
+    [[ -S "$sock" ]] && log_ok "Proxy for $friendly listening on $sock" || log_error "Socket not found: $sock"
+  done
+
+  # Prompt for connection
+  local selected sockpath
+  if [[ ${#friendlyList[@]} -eq 1 ]]; then
+    selected=${friendlyList[0]}
+  else
+    log_info "Select instance to connect:"
+    if command -v fzf >/dev/null 2>&1; then
+      selected=$(printf '%s
+' "${friendlyList[@]}" | fzf)
+    else
+      PS3="Select instance: "
+      select sel in "${friendlyList[@]}"; do
+        [[ -n "$sel" ]] && {
+          selected="$sel"
+          break
+        }
+      done
+    fi
+  fi
+
+  sockpath="$socket_dir/${selected}.sock"
+  [[ ! -S "$sockpath" ]] && {
+    log_error "Socket not found: $sockpath"
+    return 1
+  }
+  [[ -z "$PHIL_DB_PROD_ADMIN_USER" || -z "$PHIL_DB_PROD_ADMIN_PASS" ]] && {
+    log_error "PHIL_DB_PROD_ADMIN_USER and PHIL_DB_PROD_ADMIN_PASS must be set."
+    return 1
+  }
+
+  log_info "Connecting to MySQL for $selected..."
+  MYSQL_PWD="$PHIL_DB_PROD_ADMIN_PASS" mysql -u "$PHIL_DB_PROD_ADMIN_USER" -S "$sockpath"
+}
+
+# ------------------------------------------------------------------------------
+# phil-db-switch: Switch MySQL connection to another proxy instance
+# ------------------------------------------------------------------------------
+# USAGE:
+#   phil-db-switch
+#
+# DESCRIPTION:
+#   Lists .sock files in /tmp/cloudsql (friendly names) and opens a MySQL session
+#   for the selected one, without restarting proxies.
+#
+# REQUIREMENTS:
+#   - cloud-sql-proxy already running with sockets in /tmp/cloudsql
+#   - PHIL_DB_PROD_ADMIN_USER and PHIL_DB_PROD_ADMIN_PASS set
+# ------------------------------------------------------------------------------
+phil-db-switch() {
+  [[ -z "$PHIL_DB_PROD_ADMIN_USER" || -z "$PHIL_DB_PROD_ADMIN_PASS" ]] && {
+    log_error "Env vars PHIL_DB_PROD_ADMIN_USER & PHIL_DB_PROD_ADMIN_PASS must be set."
+    return 1
+  }
+
+  local socket_dir="/tmp/cloudsql" instances=()
+  for sock in "$socket_dir"/*.sock; do
+    [ -S "$sock" ] && instances+=("$(basename "$sock" .sock)")
+  done
+  [[ ${#instances[@]} -eq 0 ]] && {
+    log_error "No sockets in $socket_dir."
+    return 1
+  }
+
+  log_info "Select instance to connect:"
+  local selected
+  if command -v fzf >/dev/null 2>&1; then
+    selected=$(printf '%s\n' "${instances[@]}" | fzf)
+  else
+    select sel in "${instances[@]}"; do
+      [[ -n "$sel" ]] && {
+        selected="$sel"
+        break
+      }
+    done
+  fi
+
+  local sockpath="$socket_dir/${selected}.sock"
+  log_info "Connecting to MySQL for $selected..."
+  MYSQL_PWD="$PHIL_DB_PROD_ADMIN_PASS" mysql -u "$PHIL_DB_PROD_ADMIN_USER" -S "$sockpath"
+}
+
+# 📊 phil-db-status: Show proxy process and socket status
+# ------------------------------------------------------------------------------
+# USAGE:
+#   phil-db-status
+#
+# DESCRIPTION:
+#   Displays running cloud-sql-proxy PIDs and friendly .sock files.
+# ------------------------------------------------------------------------------
+phil-db-status() {
+  local socket_dir="/tmp/cloudsql"
+
+  log_info "Cloud SQL Proxy processes:"
+  if pgrep -fl cloud-sql-proxy >/dev/null; then
+    pgrep -fl cloud-sql-proxy | sed 's/^/  /'
+  else
+    log_info "  None found."
+  fi
+
+  log_info "Active sockets:"
+  local found=0
+  for sock in "$socket_dir"/*.sock; do
+    if [ -S "$sock" ]; then
+      printf "  %s\n" "$(basename "$sock")"
+      found=1
+    fi
+  done
+  [[ $found -eq 0 ]] && log_info "  None found."
+}
+
+# 🛑 phil-db-down: Stop proxies and clean socket files
+# ------------------------------------------------------------------------------
+# USAGE:
+#   phil-db-down
+#
+# DESCRIPTION:
+#   Kills all cloud-sql-proxy processes and removes all .sock files.
+# ------------------------------------------------------------------------------
+phil-db-down() {
+  local socket_dir="/tmp/cloudsql"
+
+  log_info "Stopping Cloud SQL Proxy processes..."
+  if pgrep -f cloud-sql-proxy >/dev/null; then
+    pgrep -f cloud-sql-proxy | xargs kill -9
+    log_ok "Proxies stopped."
+  else
+    log_info "  None running."
+  fi
+
+  if [ -d "$socket_dir" ]; then
+    rm -f "$socket_dir"/*.sock
+    log_ok "Socket files cleaned."
+  fi
+}
+
+# ==============================================================================
+# 🧰 General helpers (navigation, files, search)
+# ==============================================================================
+# Oh My Zsh's git plugin pre-defines some of these names as aliases; a function
+# can't be defined over an alias, so drop them first.
+unalias grbi gwta gbf 2>/dev/null
+
+# USAGE: mkcd <dir>        — create a directory and cd into it
+mkcd() { mkdir -p "$1" && cd "$1" || return; }
+
+# USAGE: tmpd              — cd into a fresh temp directory
+tmpd() { cd "$(mktemp -d)" || return; }
+
+# USAGE: groot             — cd to the root of the current git repo
+groot() { cd "$(git rev-parse --show-toplevel 2>/dev/null || echo .)" || return; }
+
+# USAGE: rgf <pattern>     — ripgrep → fzf (bat preview) → open match in nvim at line
+rgf() {
+  [[ -z "$1" ]] && { echo "usage: rgf <pattern>"; return 1; }
+  local sel
+  sel=$(rg --line-number --no-heading --color=always --smart-case "$@" |
+    fzf --ansi --delimiter : \
+        --preview 'bat --style=numbers --color=always --highlight-line {2} {1}' \
+        --preview-window '+{2}-10') || return
+  local file line
+  file=$(echo "$sel" | cut -d: -f1)
+  line=$(echo "$sel" | cut -d: -f2)
+  nvim "+$line" "$file"
+}
+
+# USAGE: extract <archive> — unpack tar/gz/bz2/xz/zip/7z/rar by extension
+extract() {
+  [[ -f "$1" ]] || { echo "extract: '$1' is not a file"; return 1; }
+  case "$1" in
+    *.tar.bz2|*.tbz2) tar xjf "$1" ;;
+    *.tar.gz|*.tgz)   tar xzf "$1" ;;
+    *.tar.xz|*.txz)   tar xJf "$1" ;;
+    *.tar)            tar xf "$1" ;;
+    *.bz2)            bunzip2 "$1" ;;
+    *.gz)             gunzip "$1" ;;
+    *.xz)             unxz "$1" ;;
+    *.zip)            unzip "$1" ;;
+    *.7z)             7z x "$1" ;;
+    *.rar)            unrar x "$1" ;;
+    *) echo "extract: don't know how to extract '$1'"; return 1 ;;
+  esac
+}
+
+# USAGE: killport <port>   — kill whatever is listening on a port
+killport() {
+  [[ -z "$1" ]] && { echo "usage: killport <port>"; return 1; }
+  local pids
+  pids=$(lsof -ti ":$1") || { echo "nothing on port $1"; return 0; }
+  echo "$pids" | xargs kill -9 && log_ok "killed $(echo "$pids" | wc -l | tr -d ' ') process(es) on :$1"
+}
+
+# USAGE: fkill             — fuzzy pick a process and kill it
+fkill() {
+  local pid
+  pid=$(ps -ef | sed 1d | fzf -m --header='select process(es) to kill' | awk '{print $2}')
+  [[ -n "$pid" ]] && echo "$pid" | xargs kill -"${1:-9}"
+}
+
+# USAGE: serve [port]      — static file server for the current dir (default 8000)
+serve() { python3 -m http.server "${1:-8000}"; }
+
+# ==============================================================================
+# 🐧 macOS commands on Linux — pbcopy / pbpaste / open behave the same on both
+# ==============================================================================
+# Defined only on Linux (macOS has the real ones), so muscle memory, aliases
+# (cpwd) and scripts work unchanged. Clipboard: wl-copy/wl-paste (Wayland) →
+# xclip (X11) → OSC 52 escape (SSH / no display; copy only, through tmux too).
+if [[ $OSTYPE == linux* ]]; then
+  # USAGE: pbcopy            — stdin → system clipboard (Linux shim)
+  pbcopy() {
+    if [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wl-copy &>/dev/null; then
+      wl-copy
+    elif [[ -n "${DISPLAY:-}" ]] && command -v xclip &>/dev/null; then
+      xclip -selection clipboard
+    else
+      local b64 seq
+      b64=$(base64 | tr -d '\n')
+      seq=$'\e]52;c;'"$b64"$'\a'
+      [[ -n "${TMUX:-}" ]] && seq=$'\ePtmux;\e'"$seq"$'\e\\' # allow-passthrough is on
+      { printf '%s' "$seq" >/dev/tty; } 2>/dev/null || { echo "pbcopy: no clipboard (no display, no tty)" >&2; return 1; }
+    fi
+  }
+
+  # USAGE: pbpaste           — system clipboard → stdout (Linux shim)
+  pbpaste() {
+    if [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wl-paste &>/dev/null; then
+      wl-paste --no-newline
+    elif [[ -n "${DISPLAY:-}" ]] && command -v xclip &>/dev/null; then
+      xclip -selection clipboard -o
+    else
+      echo "pbpaste: no Wayland/X11 clipboard in this session" >&2
+      return 1
+    fi
+  }
+
+  # USAGE: open <file|dir|url>… — open with the default app (Linux shim → xdg-open)
+  #        (Ubuntu's /usr/bin/open is openvt; this shadows it in interactive zsh)
+  open() {
+    [[ $# -eq 0 ]] && { echo "usage: open <file|dir|url>…"; return 1; }
+    local target
+    for target in "$@"; do
+      xdg-open "$target" >/dev/null 2>&1 &!
+    done
+  }
+fi
+
+# ==============================================================================
+# 🔧 Git helpers (fzf-powered)
+# ==============================================================================
+
+# USAGE: gbf               — fuzzy switch branch (local + remote), preview = log
+gbf() {
+  local branch
+  branch=$(git branch -a --format='%(refname:short)' | grep -v '^origin/HEAD' | sort -u |
+    fzf --prompt='branch ❯ ' --preview 'git log --oneline --graph -20 --color=always {}') || return
+  git switch "${branch#origin/}" 2>/dev/null || git switch -c "${branch#origin/}" --track "$branch"
+}
+
+# USAGE: grbi [n]          — interactive rebase of the last n commits (default 5)
+grbi() { git rebase -i "HEAD~${1:-5}"; }
+
+# USAGE: gbclean           — delete local branches already merged into main/dev
+gbclean() {
+  local base
+  for base in main dev; do
+    git show-ref --verify --quiet "refs/heads/$base" || continue
+    git branch --merged "$base" | grep -vE '^\*|^\s*(main|dev)$' | xargs -r -n1 git branch -d
+  done
+  log_ok "merged branches cleaned"
+}
+
+# USAGE: gprco             — fuzzy pick an open PR and check it out
+gprco() {
+  local pr
+  pr=$(gh pr list --limit 50 | fzf --prompt='PR ❯ ' | awk '{print $1}') || return
+  [[ -n "$pr" ]] && gh pr checkout "$pr"
+}
+
+# USAGE: gwta <branch>     — add a worktree at ../<repo>-<branch> (create branch if new)
+gwta() {
+  [[ -z "$1" ]] && { echo "usage: gwta <branch>"; return 1; }
+  local root name dir
+  root=$(git rev-parse --show-toplevel) || return
+  name=$(basename "$root")
+  dir="$(dirname "$root")/$name-${1//\//-}"
+  if git show-ref --verify --quiet "refs/heads/$1"; then
+    git worktree add "$dir" "$1"
+  else
+    git worktree add -b "$1" "$dir"
+  fi && cd "$dir" || return
+}
+
+# ==============================================================================
+# 🪟 tmux helpers
+# ==============================================================================
+
+# USAGE: ta [name]         — attach to session (default: main), creating it if needed
+ta() { tmux new-session -A -s "${1:-main}"; }
+
+# USAGE: tk                — fuzzy pick and kill a tmux session
+tk() {
+  local s
+  s=$(tmux ls -F '#S' 2>/dev/null | fzf --prompt='kill session ❯ ') || return
+  [[ -n "$s" ]] && tmux kill-session -t "$s"
+}
+
+# ==============================================================================
+# 🐍 Python helpers
+# ==============================================================================
+
+# USAGE: va [venv-dir]     — activate a venv (default .venv)
+va() { source "${1:-.venv}/bin/activate"; }
+
+# USAGE: pyclean           — remove __pycache__ and tool caches below cwd
+pyclean() {
+  find . -type d \( -name __pycache__ -o -name .pytest_cache -o -name .ruff_cache -o -name .mypy_cache \) -prune -exec rm -rf {} +
+  log_ok "python caches removed"
+}
+
+# ==============================================================================
+# 🦆 Data helpers (duckdb)
+# ==============================================================================
+
+# USAGE: csvq <file.csv> [sql]   — preview a CSV, or run SQL against it as table t
+csvq() {
+  [[ -f "$1" ]] || { echo "usage: csvq <file.csv> [sql]"; return 1; }
+  duckdb -c "CREATE VIEW t AS SELECT * FROM read_csv_auto('$1'); ${2:-SELECT * FROM t LIMIT 20};"
+}
+
+# USAGE: pq <file.parquet> [sql] — same for parquet
+pq() {
+  [[ -f "$1" ]] || { echo "usage: pq <file.parquet> [sql]"; return 1; }
+  duckdb -c "CREATE VIEW t AS SELECT * FROM read_parquet('$1'); ${2:-SELECT * FROM t LIMIT 20};"
+}
+
+# USAGE: jqf <file.json>   — fuzzy-browse the paths in a JSON file with live preview
+jqf() {
+  [[ -f "$1" ]] || { echo "usage: jqf <file.json>"; return 1; }
+  jq -r 'paths | map(tostring) | join(".")' "$1" | sort -u |
+    fzf --preview "jq -C '.\"'\"'{}\"'\"' $1 2>/dev/null | head -100" >/dev/null
+}
+
+# ==============================================================================
+# 🛠️ Terraform helpers
+# ==============================================================================
+
+# USAGE: tfw               — fuzzy select a terraform workspace
+tfw() {
+  local ws
+  ws=$(terraform workspace list | sed 's/^[* ] *//' | fzf --prompt='workspace ❯ ') || return
+  [[ -n "$ws" ]] && terraform workspace select "$ws"
+}
+
+# ==============================================================================
+# 🐳 Docker / ☸️ Kubernetes helpers (fzf pickers)
+# ==============================================================================
+
+# USAGE: dklf              — fuzzy pick a running container → follow logs
+dklf() {
+  local c
+  c=$(docker ps --format '{{.Names}}' | fzf --prompt='logs ❯ ') || return
+  [[ -n "$c" ]] && docker logs -f "$c"
+}
+
+# USAGE: dksh [shell]      — fuzzy pick a running container → exec shell (default sh)
+dksh() {
+  local c
+  c=$(docker ps --format '{{.Names}}' | fzf --prompt='exec ❯ ') || return
+  [[ -n "$c" ]] && docker exec -it "$c" "${1:-sh}"
+}
+
+# USAGE: kx                — fuzzy switch kube context
+kx() {
+  local ctx
+  ctx=$(kubectl config get-contexts -o name | fzf --prompt='context ❯ ') || return
+  [[ -n "$ctx" ]] && kubectl config use-context "$ctx"
+}
+
+# USAGE: kns               — fuzzy switch namespace in the current context
+kns() {
+  local ns
+  ns=$(kubectl get ns -o name | sed 's|namespace/||' | fzf --prompt='namespace ❯ ') || return
+  [[ -n "$ns" ]] && kubectl config set-context --current --namespace="$ns"
+}
+
+# USAGE: kl                — fuzzy pick a pod → follow logs
+kl() {
+  local pod
+  pod=$(kubectl get pods -o name | sed 's|pod/||' | fzf --prompt='logs ❯ ') || return
+  [[ -n "$pod" ]] && kubectl logs -f "$pod"
+}
+
+# USAGE: kex [shell]       — fuzzy pick a pod → exec shell (default sh)
+kex() {
+  local pod
+  pod=$(kubectl get pods -o name | sed 's|pod/||' | fzf --prompt='exec ❯ ') || return
+  [[ -n "$pod" ]] && kubectl exec -it "$pod" -- "${1:-sh}"
+}
+
+# ==============================================================================
+# 🤖 Claude Code helpers
+# ==============================================================================
+
+# USAGE: ccd <branch>      — new git worktree for <branch>, then start claude in it
+ccd() {
+  [[ -z "$1" ]] && { echo "usage: ccd <branch>"; return 1; }
+  gwta "$1" && claude
 }

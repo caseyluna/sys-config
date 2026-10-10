@@ -1,6 +1,54 @@
-.DS_STORE
+# ------------------------------------------------------------------------------
+# 🚫 ~/.gitignore_global — Global Git Ignore Rules
+# ------------------------------------------------------------------------------
+# Description:
+#   Patterns for ignoring files across all Git repositories on this system.
+#   Covers OS files, Python tooling, editor/IDE cruft, and local env artifacts.
+#
+# Author: Casey A. Thayer
+# Location: ~/.gitignore_global
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# 🍏 macOS System Files
+# ------------------------------------------------------------------------------
+.DS_Store
+
+# ------------------------------------------------------------------------------
+# 🐍 Python Environment Artifacts
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
 .python-version
-__pycache__
-.pytest_cache
-.mypy_cache
 .envrc
+.venv/
+env/
+venv/
+pip-log.txt
+
+# ------------------------------------------------------------------------------
+# 🧪 Python Testing & Type Checking
+# ------------------------------------------------------------------------------
+.pytest_cache/
+.mypy_cache/
+coverage.*
+htmlcov/
+
+# ------------------------------------------------------------------------------
+# 🧠 Editor & IDE Metadata
+# ------------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ------------------------------------------------------------------------------
+# 🔒 Secrets / Credentials (recommended to .gitignore locally)
+# ------------------------------------------------------------------------------
+.env
+.env.*
+*.secret.*
+*.key
+*.pem
+
+**/.claude/settings.local.json

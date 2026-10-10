@@ -1,0 +1,22 @@
+# Lint / local artifacts
+.tmp/
+.nvimlog
+
+# OS
+.DS_Store
+
+# Claude Code: machine-local settings are never committed
+.claude/settings.local.json
+
+# tmux plugins are installed by TPM into ~/.tmux/plugins — never tracked
+tmux/.tmux/
+
+# Claude Code account-synced skills are state, not config (written into the
+# repo because claude/skills is symlinked to ~/.claude/skills)
+claude/skills/synced/
+
+# Written by copilot.lua when nvim runs with XDG_CONFIG_HOME=repo (lint.sh) — holds auth
+github-copilot/
+
+# Claude Code worktrees (agent isolation) — local state
+.claude/worktrees/

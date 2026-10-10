@@ -1,0 +1,151 @@
+# ------------------------------------------------------------------------------
+# Taskfile.yml — Everyday chores for this dotfiles repo (go-task)
+# ------------------------------------------------------------------------------
+# What it does: one short command for checking, updating and repairing the
+#   setup. Every task runs against the repo ($SYS_CONFIG), so it works from
+#   anywhere via the ~/Taskfile.yml link: `task -g <name>`.
+# How to interact:
+#   task              list tasks (same as task --list)
+#   task check        everything CI checks — run before committing
+#   task update       upgrade Homebrew, nvim plugins, Mason tools, tmux plugins
+#   task doctor       is this machine healthy? (links, tools, smoke, Brewfile)
+# Location: ~/sys-config/Taskfile.yml → ~/Taskfile.yml (setup.sh do_links)
+# ------------------------------------------------------------------------------
+version: "3"
+
+vars:
+  REPO:
+    sh: echo "${SYS_CONFIG:-$HOME/sys-config}"
+
+set: [pipefail]
+
+tasks:
+  default:
+    desc: List tasks
+    silent: true
+    cmds:
+      - task --taskfile "{{.REPO}}/Taskfile.yml" --list
+
+  # --- checks -----------------------------------------------------------------
+  check:
+    desc: Everything CI runs — lint, docs coverage, smoke (run before committing)
+    cmds:
+      - task: lint
+      - task: docs
+      - task: smoke
+
+  lint:
+    desc: Syntax/load checks for zsh, bash, tmux, nvim, lua, json
+    cmds:
+      - bash "{{.REPO}}/scripts/lint.sh"
+
+  docs:
+    desc: Every keymap, alias and function is in docs/
+    cmds:
+      - python3 "{{.REPO}}/scripts/docs-check.py"
+
+  smoke:
+    desc: "Start nvim/tmux/zsh for real: errors, LSP attach, key conflicts (task smoke -- nvim)"
+    cmds:
+      - python3 "{{.REPO}}/scripts/smoke.py" {{.CLI_ARGS}}
+
+  validate:
+    desc: Symlinks point into the repo, tools on PATH, binaries run
+    cmds:
+      - bash "{{.REPO}}/scripts/validate.sh"
+
+  doctor:
+    desc: Is this machine healthy? validate + smoke + Brewfile check
+    cmds:
+      - task: validate
+      - task: smoke
+      - task: brew:check
+
+  # --- setup / update ---------------------------------------------------------
+  setup:
+    desc: Full bootstrap (idempotent) — pass flags with `task setup -- --no-brew`
+    cmds:
+      - bash "{{.REPO}}/setup.sh" {{.CLI_ARGS}}
+
+  links:
+    desc: Re-create symlinks only
+    cmds:
+      - bash "{{.REPO}}/setup.sh" --links-only
+
+  update:
+    desc: Upgrade Homebrew + nvim plugins + Mason tools + tmux plugins, then smoke
+    cmds:
+      - task: brew:update
+      - task: nvim:update
+      - task: tmux:update
+      - task: smoke
+
+  clean-room:
+    desc: Link into a throwaway $HOME and validate (tests setup.sh without touching yours)
+    cmds:
+      - |
+        tmp=$(mktemp -d)
+        trap 'rm -rf "$tmp"' EXIT
+        HOME="$tmp" bash "{{.REPO}}/setup.sh" --links-only
+        HOME="$tmp" zsh -l -c 'echo "login shell ok"'
+
+  # --- Homebrew ---------------------------------------------------------------
+  brew:check:
+    desc: Anything in the Brewfile missing or outdated?
+    cmds:
+      - brew bundle check --file="{{.REPO}}/Brewfile" --verbose
+
+  brew:extra:
+    desc: Installed but not in the Brewfile (dry run — nothing is removed)
+    cmds:
+      - brew bundle cleanup --file="{{.REPO}}/Brewfile"
+
+  brew:update:
+    desc: Install missing Brewfile entries and upgrade formulae (casks via `brew upgrade --cask`)
+    cmds:
+      - brew update
+      - brew bundle install --file="{{.REPO}}/Brewfile" --no-upgrade
+      - brew upgrade --formula
+
+  # --- Neovim -----------------------------------------------------------------
+  nvim:update:
+    desc: Sync lazy.nvim plugins (updates lazy-lock.json) and Mason tools
+    cmds:
+      - nvim --headless "+Lazy! sync" +qa
+      - nvim --headless "+MasonToolsUpdateSync" +qa
+
+  nvim:health:
+    desc: Headless :checkhealth — prints only ERROR / WARNING lines
+    silent: true
+    vars:
+      # Mason probes every language toolchain it could install packages with.
+      # None of our Mason tools need these (and lazy.nvim has rocks disabled).
+      IGNORED: luarocks|Composer|PHP|julia|java|javac
+    cmds:
+      - |
+        out=$(mktemp)
+        nvim --headless -c "checkhealth vim.lsp lazy mason" -c "w! $out" -c "qa!" >/dev/null 2>&1
+        ignored=$(rg -c 'WARNING ({{.IGNORED}}): not available' "$out" || true)
+        rg -n 'ERROR|WARNING' "$out" | rg -v 'WARNING ({{.IGNORED}}): not available' \
+          || echo "checkhealth: no errors or warnings"
+        [ "${ignored:-0}" -gt 0 ] && echo "(ignored ${ignored} Mason toolchain warnings for unused languages: {{.IGNORED}})"
+        rm -f "$out"
+
+  # --- tmux -------------------------------------------------------------------
+  tmux:update:
+    desc: Install + update TPM plugins
+    cmds:
+      - ~/.tmux/plugins/tpm/bin/install_plugins
+      - ~/.tmux/plugins/tpm/bin/update_plugins all
+
+  tmux:reload:
+    desc: Reload tmux.conf in the running server
+    cmds:
+      - tmux source-file ~/.tmux.conf
+
+  # --- repairs ----------------------------------------------------------------
+  zsh:cache:
+    desc: Rebuild zsh completion caches (fixes "zwc file has wrong version")
+    cmds:
+      - rm -f "${ZSH:-$HOME/.oh-my-zsh}"/cache/.zcompdump*
+      - echo "Cleared — open a new shell to rebuild."

@@ -1,72 +1,175 @@
-# python 3
-alias python=python3
-alias pip=pip3
+# ------------------------------------------------------------------------------
+# aliases.shrc — Shell aliases
+# ------------------------------------------------------------------------------
+# What it does:
+#   Short names for everyday commands, grouped by tool. Anything that needs
+#   arguments or logic is a function in functions.shrc instead.
+#
+# How to interact:
+#   Sourced by .zshrc. Edit in repo (zsh/aliases.shrc); reload with `sz`.
+#   Note: the Oh My Zsh `git` plugin also defines g*, and OMZ core defines
+#   .., ... — the ones below are *our* choices and win when names collide.
+#   Same file on macOS and Linux; OS-specific variants branch on $OSTYPE.
+#   pbcopy/pbpaste/open work on Linux too (shims in functions.shrc).
+#
+# Location: ~/.aliases.shrc (symlinked from repo)
+# ------------------------------------------------------------------------------
 
-# make neovim default vim
-export EDITOR="nvim"
-alias vim=nvim
-alias vv=nvim
-
-# general
-alias c=clear
-alias cat=bat
-alias ll='eza -l -a --icons'
-alias ls='eza -l -a --icons'
+# ------------------------------------------------------------------------------
+# 💻 Shell & navigation
+# ------------------------------------------------------------------------------
+alias c='clear'
 alias xx='exit'
-alias rsh='exec $SHELL'
-alias cdd='cd $HOME/dotfiles'
+alias rsh='exec zsh'                 # restart shell
+alias sz='source ~/.zshrc'           # reload config
 alias cdh='cd $HOME'
+alias cdc='cd "$SYS_CONFIG"'         # this repo
+alias path='print -l $path'          # one PATH entry per line
+alias cpwd='pwd | pbcopy'            # copy current dir to clipboard
 
-# direnv
+# ------------------------------------------------------------------------------
+# 📂 Files
+# ------------------------------------------------------------------------------
+# Colors: BSD ls (macOS) takes -G; GNU ls (Linux) reads -G as --no-group
+[[ $OSTYPE == darwin* ]] && _ls_color='-G' || _ls_color='--color=auto'
+alias ll="ls -lah $_ls_color"
+alias la="ls -A $_ls_color"
+unset _ls_color
+command -v bat &>/dev/null && alias cat='bat'
+alias dusort='du -sh * 2>/dev/null | sort -rh | head -20'   # biggest items here
+
+# ------------------------------------------------------------------------------
+# ✍️  Editor
+# ------------------------------------------------------------------------------
+alias vim='nvim'
+alias vv='nvim'
+
+# ------------------------------------------------------------------------------
+# 🪟 tmux
+# ------------------------------------------------------------------------------
+alias dev='bash "$SYS_CONFIG/scripts/code-session.sh"'   # nvim + shell + claude layout
+alias ts='tmux-sessionizer'          # fuzzy project → session (also prefix+f)
+alias tl='tmux ls'
+
+# ------------------------------------------------------------------------------
+# 🔐 direnv
+# ------------------------------------------------------------------------------
 alias da='direnv allow'
 alias dr='direnv reload'
 
-# git
+# ------------------------------------------------------------------------------
+# 🔧 Git & GitHub
+# ------------------------------------------------------------------------------
 alias g='git'
 alias ga='git add'
-alias gc='gcj'
-alias gp='git push'
-alias gl='git log --oneline'
 alias gst='git status'
 alias gd='git diff'
 alias gdc='git diff --cached'
-alias gm='git commit -m'
-alias gma='git commit -am'
+alias gl='git log --oneline'
+alias glg="git log --graph --all --pretty=format:'%C(yellow)%h%Creset %C(blue)%an%Creset %C(green)%ar%Creset %s%C(red)%d%Creset'"
+alias gstack='git log --oneline --graph main..HEAD'   # what's in this branch/stack
 alias gb='git branch'
 alias gco='git checkout'
+alias gm='git commit -m'
+alias gma='git commit -am'
+alias gamend='git commit --amend --no-edit'
+alias gundo='git reset --soft HEAD~1'
+alias gp='git push'
+alias gpf='git push --force-with-lease'              # never bare --force
+alias gpu='git pull'
+alias gf='git fetch --prune'
+alias gcl='git clone'
 alias gra='git remote add'
 alias grr='git remote rm'
-alias gpu='git pull'
-alias gf='git fetch'
-alias gcl='git clone'
-alias gcpr="gh pr create -w"
-alias gsync="git checkout main && git pull --rebase && git fetch --prune"
-alias glom="git pull origin main"
-alias lg=lazygit
+alias gsync='git checkout main && git pull --rebase && git fetch --prune'
+alias glom='git pull origin main'
+alias gwt='git worktree list'
+alias gcpr='gh pr create -w'
+alias gprv='gh pr view -w'
+alias gprs='gh pr status'
+alias lg='lazygit'
+alias ld='lazydocker'
 
-# docker
-alias dkps="docker ps"
-alias dkst="docker stats"
-alias dkpsa="docker ps -a"
-alias dkimgs="docker images"
-alias dkcpup="docker-compose up -d"
-alias dkcpdown="docker-compose down"
-alias dkcpstart="docker-compose start"
-alias dkcpstop="docker-compose stop"
-alias dclean="docker system prune -a --volumes"
+# ------------------------------------------------------------------------------
+# 🐍 Python & uv
+# ------------------------------------------------------------------------------
+alias python='python3'
+alias pip='pip3'
+alias uvv='uv venv && source .venv/bin/activate'
+alias uvs='uv sync'
+alias uva='uv add'
+alias uvr='uv run'
+alias uvp='uv pip install -r pyproject.toml'
+alias uvclean='uv pip uninstall -y -r <(uv pip freeze)'   # empty the current venv
+alias vd='deactivate'
+alias pyt='pytest -x -q'
+alias pytl='pytest -x -q --lf'       # re-run last failures only
 
-# kubernetes
-alias ka="kubectl apply -f $1"
-alias kdj="kubectl delete job $1"
-alias kgp="kubectl get pods"
-alias kgj="kubectl get jobs"
+# ------------------------------------------------------------------------------
+# 🛠️ Terraform  (tf = project wrapper script, tf* = raw terraform)
+# ------------------------------------------------------------------------------
+alias tf='./terraform.sh'
+alias tfi='terraform init'
+alias tfp='terraform plan'
+alias tfa='terraform apply'
+alias tfd='terraform destroy'
+alias tff='terraform fmt -recursive'
+alias tfv='terraform validate'
 
-# R
+# ------------------------------------------------------------------------------
+# 🐳 Docker
+# ------------------------------------------------------------------------------
+alias dkps='docker ps'
+alias dkpsa='docker ps -a'
+alias dkimgs='docker images'
+alias dkst='docker stats'
+alias dkl='docker logs -f'
+alias dke='docker exec -it'
+alias dkclean='docker rm $(docker ps -aq)'
+alias dk-up='docker compose up -d'
+alias dk-down='docker compose down'
+alias dk-start='docker compose start'
+alias dk-stop='docker compose stop'
+alias dk-clean='docker system prune -a --volumes'
+
+# ------------------------------------------------------------------------------
+# ☸️ Kubernetes
+# ------------------------------------------------------------------------------
+alias kgp='kubectl get pods'
+alias kgj='kubectl get jobs'
+alias kjr='kubectl get jobs | grep Running'
+alias kjf='kubectl get jobs | grep Failed'
+
+# ------------------------------------------------------------------------------
+# 📊 R
+# ------------------------------------------------------------------------------
 alias R='R --no-restore-data --no-save'
-alias r="radian"
 
-# duckdb
-alias duckdb="/Applications/duckdb ; exit;"
+# ------------------------------------------------------------------------------
+# 🤖 Claude Code
+# ------------------------------------------------------------------------------
+alias cc='claude'
+alias ccc='claude --continue'
+alias ccr='claude --resume'
 
-# terraform
-alias tf="./terraform.sh"
+# ------------------------------------------------------------------------------
+# 🔍 System & network
+# ------------------------------------------------------------------------------
+alias ports='lsof -i -P -n | grep LISTEN'
+alias ip='curl -s ifconfig.me; echo'   # public IP (Linux's own `ip`: `command ip a`)
+if [[ $OSTYPE == darwin* ]]; then
+  alias devip='ipconfig getifaddr en0'
+  alias flushdns='sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder'
+else
+  alias devip="command ip -4 route get 1.1.1.1 | awk '{for (i = 1; i < NF; i++) if (\$i == \"src\") print \$(i + 1)}'"
+  alias flushdns='resolvectl flush-caches'
+fi
+alias brewup='brew update && brew upgrade && brew cleanup && brew doctor'
+alias brewdiff='brew bundle cleanup --file="$SYS_CONFIG/Brewfile"'   # installed but not in Brewfile (dry run)
+
+# ------------------------------------------------------------------------------
+# 🥞 Phillies DBs
+# ------------------------------------------------------------------------------
+alias db-proxy-prod='cloud-sql-proxy phil-new:us-east1:phil-db-prod-v2 --port 3306 --structured-logs'
+alias db-cli-prod='mycli -h 127.0.0.1 -P 3306 -u $PHIL_DB_PROD_ADMIN_USER -p $PHIL_DB_PROD_ADMIN_PASS'
+alias ppp='security find-generic-password -s com.phillies.onboarding.generate-ssh-key -w'   # macOS keychain

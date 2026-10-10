@@ -1,72 +1,136 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+# ------------------------------------------------------------------------------
+# .zshrc — Interactive zsh configuration
+# ------------------------------------------------------------------------------
+# What it does (in order):
+#   1. Oh My Zsh + plugins (git, docker, autosuggestions, syntax highlighting)
+#   2. fzf-tab: fzf-powered Tab completion
+#   3. Starship prompt
+#   4. History settings
+#   5. Tool hooks: direnv, zoxide, fzf (Ctrl-T/Alt-C), atuin (Ctrl-R), custom
+#      fzf widgets (Ctrl-E files, Ctrl-O launcher), pyenv, fnm, kubectl, gcloud
+#   6. Aliases + functions (zsh/aliases.shrc, zsh/functions.shrc)
+#
+# Same file on macOS and Linux: OS differences are `$OSTYPE` checks inline
+# (darwin* / linux*); Linux gets pbcopy/pbpaste/open shims in functions.shrc.
+#
+# Key bindings owned here:  Ctrl-R atuin · Ctrl-T fzf files · Alt-C fzf cd ·
+#                           Ctrl-E fzf file→buffer · Ctrl-O launcher · Tab fzf-tab
+#
+# How to interact:
+#   Edit in repo (zsh/.zshrc); ~/.zshrc is a symlink. Reload: sz (source ~/.zshrc)
+#   PATH/env changes go in .zprofile, not here.
+#
+# Location: ~/.zshrc (symlinked from repo)
+# ------------------------------------------------------------------------------
+
+# .zprofile normally ran first (login shell). If not (e.g. `zsh` from a
+# non-login context), load it so PATH/SYS_CONFIG exist.
+[[ -n "${SYS_CONFIG:-}" ]] || source "${${(%):-%x}:A:h}/.zprofile"
+
+# ------------------------------------------------------------------------------
+# 1. Oh My Zsh
+# ------------------------------------------------------------------------------
+export ZSH="${ZSH:-$HOME/.oh-my-zsh}"
+# Per zsh version: /bin/zsh and Homebrew zsh compile incompatible .zwc files
+export ZSH_COMPDUMP="$ZSH/cache/.zcompdump-$HOST-$ZSH_VERSION"
+
+# Plugins: custom ones (fzf-tab, zsh-autosuggestions, fast-syntax-highlighting)
+# are cloned into $ZSH_CUSTOM/plugins by setup.sh.
+# Not used: vi-mode (conflicts with fzf keys), zsh-autocomplete (conflicts with fzf-tab)
+plugins=(
+  git
+  docker
+  docker-compose
+  virtualenv
+  zsh-autosuggestions
+  fast-syntax-highlighting
+)
+[[ $OSTYPE == darwin* ]] && plugins+=(macos)
+
+[[ -f "$ZSH/oh-my-zsh.sh" ]] && source "$ZSH/oh-my-zsh.sh"
+
+# ------------------------------------------------------------------------------
+# 2. fzf-tab — must load after compinit (OMZ did it) and before other widgets
+# ------------------------------------------------------------------------------
+if [[ -f "${ZSH_CUSTOM:-$ZSH/custom}/plugins/fzf-tab/fzf-tab.plugin.zsh" ]]; then
+  source "${ZSH_CUSTOM:-$ZSH/custom}/plugins/fzf-tab/fzf-tab.plugin.zsh"
+  zstyle ':completion:*' menu no                      # fzf-tab owns Tab
+  # BSD ls (macOS) colors with -G; GNU ls (Linux) reads -G as --no-group
+  [[ $OSTYPE == darwin* ]] && _ls_preview='ls -G' || _ls_preview='ls --color=always'
+  zstyle ':fzf-tab:complete:cd:*' fzf-preview "$_ls_preview \$realpath 2>/dev/null"
+  zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview "$_ls_preview \$realpath 2>/dev/null"
+  unset _ls_preview
+  zstyle ':fzf-tab:*' fzf-flags '--height=50%' '--reverse' '--border=rounded'
+  zstyle ':fzf-tab:*' switch-group ',' '.'            # , and . cycle completion groups
 fi
 
-# theme
-ZSH_THEME="powerlevel10k/powerlevel10k"
+# ------------------------------------------------------------------------------
+# 3. Prompt — Starship (config: starship/starship.toml → ~/.config/starship.toml)
+# ------------------------------------------------------------------------------
+if command -v starship &>/dev/null; then
+  eval "$(starship init zsh)"
+fi
 
-# Path to your oh-my-zsh installation.
-export ZSH="$HOME/.oh-my-zsh"
-export ZSH_HIGHLIGHT_HIGHLIGHTERS_DIR=$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/highlighters
-plugins=(git macos docker docker-compose virtualenv vi-mode poetry)
-# installed with brew therefor not in above list: zsh-syntax-highlighting zsh-autosuggestions
+# ------------------------------------------------------------------------------
+# 4. History (atuin also keeps its own DB; this is the plain zsh file)
+# ------------------------------------------------------------------------------
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=50000
+setopt APPEND_HISTORY INC_APPEND_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE EXTENDED_HISTORY
 
-#this line should route all .zcompdump files into the cached dir
-export ZSH_COMPDUMP=$ZSH/cache/.zcompdump-$HOST
+# ------------------------------------------------------------------------------
+# 5. Tool hooks (each guarded so a missing tool never breaks the shell)
+# ------------------------------------------------------------------------------
+# direnv: auto-load .envrc
+command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
 
-source $ZSH/oh-my-zsh.sh
+# zoxide: z <dir>, zi (interactive)
+command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
 
-# direnv
-eval "$(direnv hook zsh)"
-# kubectl
-source <(kubectl completion zsh)
-# google cloud sdk
-source "/opt/homebrew/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.zsh.inc"
+# fzf: Ctrl-T (files), Alt-C (cd), ** completion. Sourced BEFORE atuin so atuin
+# gets the final say on Ctrl-R.
+if command -v fzf &>/dev/null; then
+  source <(fzf --zsh)
+  export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+  export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+  export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+  export FZF_DEFAULT_OPTS='--height=40% --reverse --border=rounded'
+  export FZF_CTRL_T_OPTS="--preview 'bat --style=plain --color=always {} 2>/dev/null || head -100 {}'"
+  export FZF_TMUX=1
+  export FZF_TMUX_HEIGHT=40%
+fi
 
-# pyenv
-if which pyenv > /dev/null; then eval "$(pyenv init -)"; fi
-if which pyenv-virtualenv-init > /dev/null; then eval "$(pyenv virtualenv-init -)"; fi
+# atuin: Ctrl-R history TUI (per-dir filter, exit codes). Up-arrow stays native.
+command -v atuin &>/dev/null && eval "$(atuin init zsh --disable-up-arrow)"
 
-# customized properties
-source $HOME/.aliases.shrc
-source $HOME/.functions.shrc
+# Custom fzf widgets: Ctrl-E (insert file path), Ctrl-O (launcher)
+[[ -f "$SYS_CONFIG/fzf/key-bindings.zsh" ]] && source "$SYS_CONFIG/fzf/key-bindings.zsh"
 
-export SHELL=zsh
+# pyenv (Python versions; venvs via uv)
+if command -v pyenv &>/dev/null; then
+  eval "$(pyenv init -)"
+fi
 
-# fzf search
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# fnm: Node versions; --use-on-cd switches on .node-version/.nvmrc
+command -v fnm &>/dev/null && eval "$(fnm env --use-on-cd)"
 
-# bash completion
-[[ -r "/usr/local/etc/profile.d/bash_completion.sh" ]] && . "/usr/local/etc/profile.d/bash_completion.sh"
+# kubectl completion
+command -v kubectl &>/dev/null && source <(kubectl completion zsh)
 
-# homebrew
-export PATH=/opt/homebrew/bin:$PATH
-eval "$(/opt/homebrew/bin/brew shellenv)"
-export PATH="/opt/homebrew/bin:/opt/homebrew/sbin${PATH+:$PATH}"
-export PATH="/opt/homebrew/opt/openssl@3/bin:$PATH"
-export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
-export PYTHON_BUILD_HOMEBREW_OPENSSL_FORMULA=openssl@3
-export PATH="$PATH:/usr/local/bin/"
-# poetry
-export PATH="$HOME/.local/bin:$PATH"
-# zsh-kubectl-prompt
-autoload -U colors; colors
+# gcloud: PATH + completion — Homebrew cask (macOS) or google-cloud-cli
+# dnf/apt package (Linux: binary already in /usr/bin, completion in /usr/share|lib)
+for _gc in ${HOMEBREW_PREFIX:+"$HOMEBREW_PREFIX/share/google-cloud-sdk"} /usr/share/google-cloud-sdk /usr/lib/google-cloud-sdk; do
+  if [[ -f "$_gc/completion.zsh.inc" ]]; then
+    [[ -f "$_gc/path.zsh.inc" ]] && source "$_gc/path.zsh.inc"
+    source "$_gc/completion.zsh.inc"
+    break
+  fi
+done
+unset _gc
 
-# zsh-gcloud-prompt
-autoload -Uz colors; colors
-skip_global_compinit=1
-
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
-
-# autocompletion kubernetes
-source <(kubectl completion zsh)
-
-# needs to be on the end:
-source $HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-source $HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-
+# ------------------------------------------------------------------------------
+# 6. Aliases and functions
+# ------------------------------------------------------------------------------
+[[ -f "$HOME/.aliases.shrc" ]]   && source "$HOME/.aliases.shrc"
+[[ -f "$HOME/.functions.shrc" ]] && source "$HOME/.functions.shrc"

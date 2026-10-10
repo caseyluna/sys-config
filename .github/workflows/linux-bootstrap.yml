@@ -1,0 +1,156 @@
+# ------------------------------------------------------------------------------
+# Linux bootstrap — prove `bash setup.sh` works on a clean Ubuntu and Fedora,
+# but only pay for the full install when the diff can break it. See docs/TESTING.md.
+# ------------------------------------------------------------------------------
+# plan   → scripts/bootstrap-scope.sh picks the mode from the PR diff:
+#   full  (~15 min) Brewfile, scripts/linux/**, setup.sh install steps, this file
+#         → `setup.sh --yes --no-gui` on an Ubuntu runner + fedora:latest container
+#           (distro script, Homebrew + whole Brewfile, pyenv build, nvim, …)
+#   quick (~2 min)  everything else here (zsh/, tmux/, link-table-only setup.sh, …)
+#         → links + Oh My Zsh + tmux plugins on Ubuntu (no distro script, no
+#           Homebrew); interactive zsh and tmux must start with no errors
+# Also full: weekly schedule (catches upstream drift — removed formulae, distro
+# repo changes; schedules fire from the default branch), the `full-bootstrap`
+# label on a PR, or Actions → Linux bootstrap → Run workflow (mode: full).
+# fedora job: Homebrew refuses root, so it creates a sudo user and runs as it.
+# validate.sh is a report (continue-on-error): CI has no real login session, so
+# "login shell" / docker-group checks can't pass until a re-login.
+# ------------------------------------------------------------------------------
+name: Linux bootstrap
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - "setup.sh"
+      - "Brewfile"
+      - "scripts/linux/**"
+      - "scripts/validate.sh"
+      - "scripts/bootstrap-scope.sh"
+      - "zsh/**"
+      - "tmux/**"
+      - ".github/workflows/linux-bootstrap.yml"
+  schedule:
+    - cron: "0 9 * * 1" # Mondays 09:00 UTC
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "auto = decide from the diff against the default branch"
+        type: choice
+        options: [auto, quick, full]
+        default: full
+
+concurrency:
+  group: linux-bootstrap-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      mode: ${{ steps.scope.outputs.mode }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Decide quick vs full
+        id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+          ACTION: ${{ github.event.action }}
+          ADDED_LABEL: ${{ github.event.label.name }}
+          HAS_FULL_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'full-bootstrap') }}
+          INPUT_MODE: ${{ inputs.mode }}
+          BASE: ${{ github.base_ref || github.event.repository.default_branch }}
+        run: |
+          {
+            if [ "$EVENT" = schedule ]; then
+              echo "mode=full"; echo "reason=weekly run (upstream drift)"
+            elif [ "$EVENT" = workflow_dispatch ] && [ "$INPUT_MODE" != auto ]; then
+              echo "mode=$INPUT_MODE"; echo "reason=manual run"
+            elif [ "$ACTION" = labeled ] && [ "$ADDED_LABEL" != full-bootstrap ]; then
+              echo "mode=skip"; echo "reason=label '$ADDED_LABEL' doesn't affect this check"
+            elif [ "$HAS_FULL_LABEL" = true ]; then
+              echo "mode=full"; echo "reason=PR has the full-bootstrap label"
+            else
+              bash scripts/bootstrap-scope.sh "origin/$BASE" HEAD
+            fi
+          } | tee -a "$GITHUB_OUTPUT"
+          { echo "### Linux bootstrap: \`$(grep -m1 '^mode=' "$GITHUB_OUTPUT" | cut -d= -f2)\`"
+            grep -m1 '^reason=' "$GITHUB_OUTPUT" | cut -d= -f2-
+            echo; echo "Need the full install anyway? Add the \`full-bootstrap\` label."; } >> "$GITHUB_STEP_SUMMARY"
+
+  quick:
+    needs: plan
+    if: needs.plan.outputs.mode == 'quick'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: zsh + tmux (distro packages, no Homebrew)
+        run: sudo apt-get update -q && sudo apt-get install -y -q zsh tmux curl
+
+      - name: Links, Oh My Zsh, tmux plugins (setup.sh --no-system --no-brew --no-nvim)
+        run: bash setup.sh --yes --no-system --no-brew --no-nvim
+
+      - name: Interactive zsh starts clean (real pty)
+        run: |
+          out=$(script -qec "zsh -il -c true" /dev/null)
+          if [ -n "$out" ]; then printf '%s\n' "$out"; echo "::error::zsh printed output/errors at startup"; exit 1; fi
+          zsh -ilc 'whence -w pbcopy pbpaste open; alias ll'
+
+      - name: tmux starts with the repo config
+        run: |
+          tmux -f ~/.tmux.conf new-session -d -s ci
+          sleep 2
+          tmux show -g default-shell
+          tmux kill-server
+
+  ubuntu:
+    needs: plan
+    if: needs.plan.outputs.mode == 'full'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bootstrap (setup.sh --yes --no-gui)
+        run: bash setup.sh --yes --no-gui
+
+      - name: Validate
+        continue-on-error: true
+        run: bash scripts/validate.sh
+
+      - name: Shell starts clean
+        run: |
+          zsh -ilc 'echo "zsh ok: $(command -v nvim) $(command -v bat) $(command -v fd)"; type pbcopy open'
+
+  fedora:
+    needs: plan
+    if: needs.plan.outputs.mode == 'full'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    container: fedora:latest
+    steps:
+      - name: Prerequisites + sudo user
+        run: |
+          dnf install -y -q git sudo
+          useradd -m -s /bin/bash dev
+          echo "dev ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/dev
+
+      - uses: actions/checkout@v4
+
+      - name: Bootstrap (setup.sh --yes --no-gui, as dev)
+        run: |
+          cp -r "$GITHUB_WORKSPACE" /home/dev/sys-config && chown -R dev:dev /home/dev/sys-config
+          sudo -iu dev bash -c 'cd ~/sys-config && bash setup.sh --yes --no-gui'
+
+      - name: Validate
+        continue-on-error: true
+        run: sudo -iu dev bash -c 'bash ~/sys-config/scripts/validate.sh'
+
+      - name: Shell starts clean
+        run: |
+          sudo -iu dev zsh -ilc 'echo "zsh ok: $(command -v nvim) $(command -v bat) $(command -v fd)"; type pbcopy open'

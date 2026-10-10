@@ -1,0 +1,9 @@
+# ------------------------------------------------------------------------------
+# allow.txt — smoke.py findings that are intentional (see scripts/smoke.py)
+# ------------------------------------------------------------------------------
+# One per line, copied from the FAIL line without the `[smoke]   FAIL ` part;
+# matched as a prefix. Add a comment saying why. Human-edited only — the
+# pr-autofix workflow never commits this file.
+# Example:
+#   nvim: n <Space>a: is a prefix of   # harpoon: <Space>a pins, <Space>am menu
+# ------------------------------------------------------------------------------
