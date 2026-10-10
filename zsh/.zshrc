@@ -101,10 +101,9 @@ command -v atuin &>/dev/null && eval "$(atuin init zsh --disable-up-arrow)"
 # Custom fzf widgets: Ctrl-E (insert file path), Ctrl-O (launcher)
 [[ -f "$SYS_CONFIG/fzf/key-bindings.zsh" ]] && source "$SYS_CONFIG/fzf/key-bindings.zsh"
 
-# pyenv (+ virtualenv plugin)
+# pyenv (Python versions; venvs via uv)
 if command -v pyenv &>/dev/null; then
   eval "$(pyenv init -)"
-  command -v pyenv-virtualenv-init &>/dev/null && eval "$(pyenv virtualenv-init -)"
 fi
 
 # fnm: Node versions; --use-on-cd switches on .node-version/.nvmrc
