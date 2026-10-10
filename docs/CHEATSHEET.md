@@ -68,6 +68,7 @@ Run `task <name>` in the repo, or `task -g <name>` from anywhere. `task` alone l
 | `doctor` | validate + smoke + Brewfile check — "is this machine healthy?" |
 | `update` | Homebrew + nvim plugins + Mason tools + tmux plugins, then smoke |
 | `setup` · `links` · `clean-room` | bootstrap · re-link only · link into a throwaway `$HOME` |
+| `setup:config` · `setup:server` · `setup:fresh` | re-apply config without installs · headless Linux (no prompts, no GUI apps) · print new-machine steps |
 | `brew:check` · `brew:extra` · `brew:update` | missing/outdated · installed-but-undeclared (dry run) · install + upgrade |
 | `nvim:update` · `nvim:health` | Lazy sync + Mason update · checkhealth errors/warnings only |
 | `tmux:update` · `tmux:reload` | TPM install/update · reload config |

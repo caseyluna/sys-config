@@ -67,6 +67,33 @@ tasks:
     cmds:
       - bash "{{.REPO}}/setup.sh" {{.CLI_ARGS}}
 
+  setup:config:
+    desc: Re-apply config only — links, Oh My Zsh, tmux plugins; skips Homebrew + Neovim installs
+    cmds:
+      - bash "{{.REPO}}/setup.sh" --no-brew --no-nvim {{.CLI_ARGS}}
+
+  setup:server:
+    desc: "Headless Linux box: no prompts, no GUI apps (Ghostty, fonts, flatpaks)"
+    preconditions:
+      - sh: '[ "$(uname -s)" = Linux ]'
+        msg: "setup:server is for headless Linux — on macOS use `task setup`."
+    cmds:
+      - bash "{{.REPO}}/setup.sh" --yes --no-gui {{.CLI_ARGS}}
+
+  setup:fresh:
+    desc: Print the first-run steps for a new machine (task isn't installed until setup.sh runs)
+    silent: true
+    cmds:
+      - |
+        cat <<'STEPS'
+        New machine:
+          1. git clone https://github.com/caseyluna/sys-config ~/sys-config
+          2. bash ~/sys-config/setup.sh            # Linux server: add --yes --no-gui
+          3. exec zsh                              # load the new shell config
+          4. task doctor                           # verify links, tools, smoke, Brewfile
+        Details: docs/INSTALL.md
+        STEPS
+
   links:
     desc: Re-create symlinks only
     cmds:
