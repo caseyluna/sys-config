@@ -90,7 +90,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: zsh + tmux (distro packages, no Homebrew)
-        run: sudo apt-get update -q && sudo apt-get install -y -q zsh tmux curl
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q zsh tmux curl
+          # Runner image quirk: /usr/share/zsh is world-writable (777), which makes
+          # compinit/compaudit refuse completions. Real installs are 755.
+          sudo chmod -R go-w /usr/share/zsh
 
       - name: Links, Oh My Zsh, tmux plugins (setup.sh --no-system --no-brew --no-nvim)
         run: bash setup.sh --yes --no-system --no-brew --no-nvim
