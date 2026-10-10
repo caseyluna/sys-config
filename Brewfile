@@ -44,9 +44,6 @@ brew "btop"                   # Resource monitor
 brew "coreutils"              # GNU coreutils (grealpath, gsort, …)
 brew "curl"
 brew "wget"
-brew "asciinema"              # Record terminal sessions
-brew "mosh"                   # Roaming SSH
-brew "ranger"                 # Terminal file browser
 brew "bzip2"
 brew "xz"
 brew "zstd"
@@ -75,11 +72,9 @@ brew "commitizen"             # Conventional commits helper
 # Python (primary language) — pyenv for interpreters, uv for projects
 # ------------------------------------------------------------------------------
 brew "pyenv"                  # Python versions (setup.sh installs + sets global 3.13)
-brew "pyenv-virtualenv"       # pyenv venv plugin
 brew "uv"                     # Fast package/venv manager (uvv, uvs, uvr, …)
 brew "python@3.13"            # Homebrew python for formulae that need it
 brew "ipython"
-brew "poetry"                 # For projects that still use it
 
 # ------------------------------------------------------------------------------
 # Node — only for npm-distributed tools (Mason LSPs/prettier, Claude Code deps)
@@ -114,17 +109,13 @@ cask "docker-desktop"
 # ------------------------------------------------------------------------------
 brew "markdownlint-cli"       # scripts + nvim-lint
 brew "marksman"               # Markdown LSP
-brew "mdcat"                  # Render markdown in terminal
 brew "yamllint"
 
 # ------------------------------------------------------------------------------
 # Other languages (occasional — remove if you stop using them)
 # ------------------------------------------------------------------------------
-brew "go"                     # go-task plugins, occasional tooling
-brew "rust"                   # cargo for the odd Rust CLI; Mason cargo builds
 brew "r"                      # R (alias R=…)
 brew "openblas"               # Linear algebra for R / NumPy
-brew "llvm"                   # clang toolchain for native builds
 
 # ------------------------------------------------------------------------------
 # Terminal emulator + fonts (ghostty/config expects JetBrainsMono Nerd Font)
