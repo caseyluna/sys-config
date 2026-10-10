@@ -54,7 +54,11 @@ concurrency:
 
 jobs:
   autofix:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    # Same-repo PRs, plus re-runs dispatched by ci-autofix. Skip PR runs the
+    # bot's own pushes start: the run that made that commit already verified it.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'github-actions[bot]')
     runs-on: macos-latest
     timeout-minutes: 45
     env:
@@ -97,6 +101,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          allowed_bots: github-actions # ci-autofix re-runs this as the Actions bot
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: >-
             --max-turns 60
@@ -140,6 +145,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          allowed_bots: github-actions # ci-autofix re-runs this as the Actions bot
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: >-
             --max-turns 40
