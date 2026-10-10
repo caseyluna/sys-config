@@ -180,7 +180,8 @@ do_links
 step "zsh"
 if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
   log "Installing Oh My Zsh..."
-  KEEP_ZSHRC=yes RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+  # REPO is exported above for our scripts; the OMZ installer reads REPO too (owner/name to clone)
+  REPO=ohmyzsh/ohmyzsh KEEP_ZSHRC=yes RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 else
   log "Oh My Zsh: present"
 fi
