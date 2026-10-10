@@ -575,7 +575,7 @@ if [[ $OSTYPE == linux* ]]; then
       b64=$(base64 | tr -d '\n')
       seq=$'\e]52;c;'"$b64"$'\a'
       [[ -n "${TMUX:-}" ]] && seq=$'\ePtmux;\e'"$seq"$'\e\\' # allow-passthrough is on
-      printf '%s' "$seq" >/dev/tty
+      { printf '%s' "$seq" >/dev/tty; } 2>/dev/null || { echo "pbcopy: no clipboard (no display, no tty)" >&2; return 1; }
     fi
   }
 

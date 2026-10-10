@@ -14,6 +14,13 @@ set -uo pipefail
 
 REPO="${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." && pwd)}"
 FAILED=0
+# Run from bash / CI (no login zsh)? Rebuild the PATH .zprofile would give us.
+if ! command -v brew &>/dev/null; then
+  for b in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew "$HOME/.linuxbrew/bin/brew"; do
+    [[ -x "$b" ]] && { eval "$("$b" shellenv)"; break; }
+  done
+fi
+export PATH="$HOME/.pyenv/shims:$HOME/.local/bin:$PATH"
 ok() { echo "  ✓ $*"; }
 bad() { echo "  ✗ $*"; FAILED=1; }
 section() { echo; echo "=== $* ==="; }
