@@ -135,7 +135,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: >-
             --max-turns 40
-            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git diff:*),Bash(git log:*),Bash(python3 scripts/docs-check.py)"
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git diff:*),Bash(git log:*),Bash(grep -rn:*),Bash(python3 scripts/docs-check.py)"
           prompt: |
             You keep this dotfiles repo's docs in sync with its config. Read CLAUDE.md first.
 
@@ -148,6 +148,8 @@ jobs:
                - troubleshooting-relevant changes → docs/DEBUG.md
                - new workflows / scripts          → docs/WORKFLOWS.md, docs/TESTING.md
                Add new items, change descriptions that are now wrong, remove items that no longer exist.
+               For every key, alias or command the diff renamed or removed, `grep -rn` ALL of docs/
+               (WORKFLOWS.md, README-style guides too) and update each mention, not just the table.
             3. Run `python3 scripts/docs-check.py` and fix anything it reports. Only add to
                docs/.docs-ignore for genuinely internal helpers.
 

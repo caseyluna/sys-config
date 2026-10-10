@@ -29,7 +29,7 @@ Task-based guide for common developer workflows using the full stack of tools in
 | Know the function/class name | Aerial symbol search | `<Space>rA` |
 | Recent files | Telescope oldfiles | `<Space>fr` |
 | Jump to a visible position | Flash labels | `<Space>j` |
-| Pin 4 key files for a task | Harpoon | `<Space>a` to add, `<Space>1–4` to jump |
+| Pin 4 key files for a task | Harpoon | `<Space>aa` to add, `<Space>1–4` to jump |
 
 ### Navigating a codebase you don't know
 1. `<Space>fs` live grep to find entry points
@@ -90,7 +90,7 @@ Task-based guide for common developer workflows using the full stack of tools in
 ## Editing workflows
 
 ### Project-wide find & replace
-1. `<Space>S` opens Spectre
+1. `<Space>SS` opens Spectre
 2. Type search pattern, tab to replacement
 3. `<Space>Sw` with cursor on a word to pre-fill the search
 4. Apply per-match, per-file, or all at once inside the Spectre buffer
@@ -101,7 +101,7 @@ Task-based guide for common developer workflows using the full stack of tools in
 3. `gR` to verify all references updated correctly
 
 ### Working with multiple files
-1. `<Space>a` to add up to 4 core files to Harpoon; `<Space>1–4` to jump instantly
+1. `<Space>aa` to add up to 4 core files to Harpoon; `<Space>1–4` to jump instantly
 2. `]b` / `[b` cycle open buffers; `<Space>bd` closes one without disturbing the layout
 3. `<Space>Sf` to search/replace only within the current file
 
