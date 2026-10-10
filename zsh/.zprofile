@@ -37,7 +37,6 @@ path=(
   "$PYENV_ROOT/shims"
   "$HOME/.local/bin"
   "$HOME/bin"
-  "$HOME/.dagger/bin"
   $path
 )
 

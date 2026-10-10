@@ -16,7 +16,6 @@
 # ------------------------------------------------------------------------------
 # Taps (setup.sh runs `brew trust` on each — Homebrew 6 refuses untrusted taps)
 # ------------------------------------------------------------------------------
-tap "dagger/tap"              # Dagger CI/CD pipeline tool
 tap "hashicorp/tap"           # Official Terraform builds (core formula is stale/removed)
 
 # ------------------------------------------------------------------------------
@@ -105,7 +104,6 @@ brew "hadolint"               # Dockerfile linter
 brew "kubernetes-cli"         # kubectl (kx, kns, kl, kex)
 brew "helm"
 brew "k9s"                    # Kubernetes TUI (homebrew-core)
-brew "dagger"
 brew "go-task"                # Taskfile runner
 brew "hashicorp/tap/terraform" # tfi/tfp/tfa…, terraformls in nvim
 cask "gcloud-cli"             # gcloud / bq (functions.shrc gcpp, query-gcp)
