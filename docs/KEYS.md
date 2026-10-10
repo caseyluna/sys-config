@@ -31,7 +31,7 @@ Leader is `<Space>`. Press `<Space>` and pause — which-key lists every group. 
 | Hover docs | `K` | lsp |
 | Symbol outline sidebar / fuzzy symbol search | `<Space>ra` / `<Space>rA` | aerial |
 | Jump to any visible spot | `<Space>j` then label | flash |
-| Pin file / open pins / jump to pin 1-4 | `<Space>a` / `<Space>am` / `<Space>1..4` | harpoon |
+| Pin file / open pins / jump to pin 1-4 | `<Space>aa` / `<Space>am` / `<Space>1..4` | harpoon |
 | File tree (float) / git status tree / buffer tree | `<Space>ee` / `<Space>eg` / `<Space>bf` | neo-tree |
 | Edit a directory like a buffer | `<Space>o` (`-` = up) | oil |
 | Next / prev buffer | `]b` / `[b` | bufferline |
@@ -54,7 +54,7 @@ Leader is `<Space>`. Press `<Space>` and pause — which-key lists every group. 
 | Format buffer / selection | `<Space>mp` | conform (also on save) |
 | Lint now | `<Space>ml` | nvim-lint (also on save) |
 | Toggle inlay hints | `<Space>uh` | lsp |
-| Project find & replace / word under cursor / this file | `<Space>S` / `<Space>Sw` / `<Space>Sf` | spectre |
+| Project find & replace / word under cursor / this file | `<Space>SS` / `<Space>Sw` / `<Space>Sf` | spectre |
 | Comment line / block / motion | `gcc` / `gbc` / `gc{motion}` | Comment |
 | Surround add / change / delete | `ys{motion}{char}` / `cs{old}{new}` / `ds{char}` | nvim-surround |
 | Select around/inside function, class, block | `af` `if` `ac` `ic` `ab` `ib` | treesitter-textobjects |
