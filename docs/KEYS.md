@@ -34,7 +34,7 @@ Leader is `<Space>`. Press `<Space>` and pause — which-key lists every group. 
 | Pin file / open pins / jump to pin 1-4 | `<Space>aa` / `<Space>am` / `<Space>1..4` | harpoon |
 | File tree (float) / git status tree / buffer tree | `<Space>ee` / `<Space>eg` / `<Space>bf` | neo-tree |
 | Edit a directory like a buffer | `<Space>o` (`-` = up) | oil |
-| Next / prev buffer | `]b` / `[b` | bufferline |
+| Next / prev buffer | `<Tab>` / `<S-Tab>` (or `]b` / `[b`) | bufferline |
 | Close buffer (keep layout) / close others / pin | `<Space>bd` / `<Space>bo` / `<Space>bp` | snacks, bufferline |
 | Move between splits **and tmux panes** | `Ctrl-h/j/k/l` | nvim-tmux-navigation |
 | Next / prev function, class | `]f` `[f` `]c` `[c` | treesitter-textobjects |

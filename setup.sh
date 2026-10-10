@@ -107,6 +107,8 @@ do_links() {
   link_file "$REPO/ghostty"              "$HOME/.config/ghostty"
   # scripts on PATH
   link_file "$REPO/scripts/tmux-sessionizer" "$HOME/.local/bin/tmux-sessionizer"
+  # go-task global Taskfile: `task -g <name>` from anywhere
+  link_file "$REPO/Taskfile.yml"         "$HOME/Taskfile.yml"
   # Claude Code — link individual files/dirs only; ~/.claude itself holds state
   link_file "$REPO/claude/settings.json"   "$HOME/.claude/settings.json"
   link_file "$REPO/claude/CLAUDE.md"       "$HOME/.claude/CLAUDE.md"
@@ -117,7 +119,7 @@ do_links() {
   link_file "$REPO/claude/agents"          "$HOME/.claude/agents"
 
   # Stale links from older versions of this repo
-  for stale in "$HOME/.zshprofile" "$HOME/.p10k.zsh" "$HOME/.fzf" "$HOME/.config/kitty"; do
+  for stale in "$HOME/.zshprofile" "$HOME/.p10k.zsh" "$HOME/.fzf"; do
     if [[ -L "$stale" && "$(readlink "$stale")" == "$REPO"* ]]; then
       log "CLEAN  removing stale link $stale"
       rm -f "$stale"

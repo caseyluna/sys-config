@@ -31,6 +31,7 @@ on:
       - "scripts/**"
       - "setup.sh"
       - "Brewfile"
+      - "Taskfile.yml"
       - ".github/workflows/pr-autofix.yml"
       - "!nvim/lazy-lock.json"
 

@@ -9,7 +9,8 @@
 --   $SMOKE_OUT and quits:
 --     maps   — {mode, lhs, src} per definition (lazy `keys` specs: src=lazy:<plugin>)
 --     errors — error messages raised during startup / plugin load / file open
---     warns  — vim.notify WARN+ (deprecations etc.)
+--     warns  — vim.deprecate calls (non-fatal)
+--     (vim.notify WARN/ERROR, incl. deferred ones like lualine's, go to errors)
 --     lsp    — {ft, expected = {server...}, attached = {client...}}
 -- Run via: python3 scripts/smoke.py  (not meant to be used directly)
 -- ------------------------------------------------------------------------------
@@ -84,13 +85,38 @@ vim.api.nvim_set_keymap = function(mode, lhs, rhs, opts)
 	return api_set(mode, lhs, rhs, opts)
 end
 
-local notify = vim.notify
-vim.notify = function(msg, level, opts)
+-- Record every vim.notify WARN+ (seen on every launch: a failure). noice /
+-- nvim-notify replace vim.notify during startup, so keep this wrapper
+-- outermost: later assignments to vim.notify become the inner function.
+local inner_notify = vim.notify
+local function notify_wrapper(msg, level, opts)
 	if (level or 0) >= vim.log.levels.WARN then
-		local list = level >= vim.log.levels.ERROR and result.errors or result.warns
-		table.insert(list, "notify: " .. tostring(msg):gsub("\n.*", ""))
+		table.insert(result.errors, "notify: " .. tostring(msg):gsub("\n.*", ""))
 	end
-	return notify(msg, level, opts)
+	return inner_notify(msg, level, opts)
+end
+do
+	local mt = getmetatable(vim)
+	local index, newindex = mt.__index, mt.__newindex
+	rawset(vim, "notify", nil)
+	mt.__index = function(t, k)
+		if k == "notify" then
+			return notify_wrapper
+		end
+		if type(index) == "function" then
+			return index(t, k)
+		end
+		return index and index[k]
+	end
+	mt.__newindex = function(t, k, v)
+		if k == "notify" then
+			inner_notify = v
+		elseif newindex then
+			newindex(t, k, v)
+		else
+			rawset(t, k, v)
+		end
+	end
 end
 vim.deprecate = function(name, alt, version, plugin)
 	table.insert(
@@ -198,13 +224,18 @@ vim.api.nvim_create_autocmd("VimEnter", {
 				table.sort(got)
 				table.insert(result.lsp, { ft = ft, expected = want, attached = got })
 			end
-			-- Errors that were reported via messages rather than thrown.
-			for _, line in ipairs(vim.split(vim.fn.execute("messages"), "\n")) do
-				if line:match("^E%d+:") or line:match("^Error") or line:match("stack traceback") then
-					err("messages", line)
+			-- Plugins (lualine…) report config problems via vim.defer_fn ~2s after
+			-- load. A vim.wait inside this scheduled callback doesn't run those, so
+			-- return to the event loop and collect afterwards.
+			vim.defer_fn(function()
+				-- Errors that were reported via messages rather than thrown.
+				for _, line in ipairs(vim.split(vim.fn.execute("messages"), "\n")) do
+					if line:match("^E%d+:") or line:match("^Error") or line:match("stack traceback") then
+						err("messages", line)
+					end
 				end
-			end
-			finish()
+				finish()
+			end, 3000)
 		end)
 	end,
 })
