@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 # ------------------------------------------------------------------------------
-# setup.sh — One-shot bootstrap for sys-config dotfiles (macOS, Apple Silicon)
+# setup.sh — One-shot bootstrap for sys-config dotfiles (macOS + Linux)
 # ------------------------------------------------------------------------------
+# Same entry point everywhere: macOS (Apple Silicon/Intel), Fedora/RHEL, and
+# Ubuntu/Debian. The CLI toolchain comes from the Brewfile on every OS (Homebrew
+# on Linux), so tools, names and versions match; only system bits differ.
+#
 # What it does (in order; every step is idempotent and safe to re-run):
+#   0. system      — Linux only: scripts/linux/<distro>.sh (compilers, zsh, Python
+#                    build libs, clipboard, docker, gcloud, ghostty/fonts on desktops)
 #   1. preflight   — git/curl/zsh present; Xcode CLT installed (macOS)
 #   2. brew        — install Homebrew, then `brew bundle --no-upgrade` (Brewfile)
 #   3. links       — symlink dotfiles from $HOME / ~/.config into this repo
@@ -19,7 +25,9 @@
 #   bash setup.sh --links-only    # only step 3 (great for HOME=/tmp/x clean-room tests)
 #   bash setup.sh --no-brew       # skip Homebrew/Brewfile
 #   bash setup.sh --no-nvim       # skip headless Neovim bootstrap
-#   bash setup.sh --yes           # don't prompt (chsh)
+#   bash setup.sh --no-system     # Linux: skip the distro package script
+#   bash setup.sh --gui|--no-gui  # Linux: force/skip ghostty, fonts, flatpaks (default: auto)
+#   bash setup.sh --yes           # don't prompt (chsh, Homebrew installer on Linux)
 #   REPO=/path/to/clone bash setup.sh   # if not running from inside the repo
 #
 # After: exec zsh. Verify with: bash scripts/validate.sh
@@ -31,14 +39,16 @@ set -euo pipefail
 # ------------------------------------------------------------------------------
 # Flags
 # ------------------------------------------------------------------------------
-DO_BREW=1 DO_NVIM=1 LINKS_ONLY=0 ASSUME_YES=0
+DO_BREW=1 DO_NVIM=1 DO_SYSTEM=1 LINKS_ONLY=0 ASSUME_YES=0 GUI_FLAG=""
 for arg in "$@"; do
   case "$arg" in
     --links-only) LINKS_ONLY=1 ;;
     --no-brew)    DO_BREW=0 ;;
     --no-nvim)    DO_NVIM=0 ;;
+    --no-system)  DO_SYSTEM=0 ;;
+    --gui|--no-gui) GUI_FLAG="$arg" ;;
     --yes|-y)     ASSUME_YES=1 ;;
-    -h|--help)    sed -n '2,30p' "$0"; exit 0 ;;
+    -h|--help)    sed -n '2,35p' "$0"; exit 0 ;;
     *) echo "Unknown flag: $arg (see --help)" >&2; exit 2 ;;
   esac
 done
@@ -134,6 +144,33 @@ if [[ $LINKS_ONLY -eq 1 ]]; then
 fi
 
 # ------------------------------------------------------------------------------
+# 0. system — Linux distro packages (runs first: a fresh Ubuntu has no zsh yet)
+#    Distro from /etc/os-release: ID, then ID_LIKE (pop/mint → ubuntu, rocky → fedora)
+# ------------------------------------------------------------------------------
+OS="$(uname -s)"
+if [[ "$OS" == "Linux" ]]; then
+  [[ $(id -u) -eq 0 ]] && { err "Run as your user, not root (Homebrew refuses root; sudo is used where needed)."; exit 1; }
+  distro=""
+  # shellcheck disable=SC1091
+  ids="$(. /etc/os-release 2>/dev/null && echo "${ID:-} ${ID_LIKE:-}")"
+  for id in $ids; do
+    case "$id" in
+      fedora|rhel|centos|rocky|almalinux) distro=fedora; break ;;
+      ubuntu|debian) distro=ubuntu; break ;;
+    esac
+  done
+  if [[ $DO_SYSTEM -eq 0 ]]; then
+    log "skip: system packages (--no-system)"
+  elif [[ -n "$distro" ]]; then
+    step "system ($distro)"
+    bash "$REPO/scripts/linux/$distro.sh" ${GUI_FLAG:+"$GUI_FLAG"}
+  else
+    log "No package script for '${ids:-unknown}'. Install the equivalents of scripts/linux/ubuntu.sh"
+    log "(C compiler + make, curl, zsh, file, procps, Python build headers, xclip/wl-clipboard), then re-run."
+  fi
+fi
+
+# ------------------------------------------------------------------------------
 # 1. preflight
 # ------------------------------------------------------------------------------
 step "preflight"
@@ -144,7 +181,7 @@ if [[ "$(uname)" == "Darwin" ]] && ! xcode-select -p &>/dev/null; then
   err "Xcode Command Line Tools are not installed. Run: xcode-select --install  — then re-run setup."
   exit 1
 fi
-log "git, curl, zsh, Xcode CLT: ok"
+log "git, curl, zsh$([[ "$OS" == Darwin ]] && echo ", Xcode CLT"): ok"
 
 # ------------------------------------------------------------------------------
 # 2. brew
@@ -153,9 +190,11 @@ if [[ $DO_BREW -eq 1 ]]; then
   step "brew"
   if ! command -v brew &>/dev/null; then
     log "Installing Homebrew..."
+    # Linux + --yes: no "press RETURN" (sudo was just used by the distro script)
+    if [[ "$OS" == Linux && $ASSUME_YES -eq 1 ]]; then export NONINTERACTIVE=1; fi
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   fi
-  for prefix in /opt/homebrew /usr/local /home/linuxbrew/.linuxbrew; do
+  for prefix in /opt/homebrew /usr/local /home/linuxbrew/.linuxbrew "$HOME/.linuxbrew"; do
     [[ -x "$prefix/bin/brew" ]] && { eval "$("$prefix/bin/brew" shellenv)"; break; }
   done
   # Homebrew >= 6 refuses formulae from third-party taps until they're trusted
@@ -230,7 +269,14 @@ if command -v pyenv &>/dev/null; then
   PY_VER="${PY_VER:-3.13}"
   latest=$(pyenv latest --known "$PY_VER" 2>/dev/null || true)
   if [[ -n "$latest" ]]; then
-    pyenv install --skip-existing "$latest"
+    if [[ "$OS" == Linux && -n "${HOMEBREW_PREFIX:-}" ]]; then
+      # Build against the distro's -devel libs: with Linuxbrew on PATH, its
+      # pkg-config hands CPython brew's OpenSSL headers but not its rpath.
+      PATH="$(tr ':' '\n' <<<"$PATH" | grep -v "^$HOMEBREW_PREFIX" | paste -sd: -)" \
+        "$(command -v pyenv)" install --skip-existing "$latest"
+    else
+      pyenv install --skip-existing "$latest"
+    fi
     pyenv global "$latest"
     log "pyenv global: $latest"
   else
@@ -270,6 +316,11 @@ fi
 # 9. claude — register MCP servers at user scope (stored in ~/.claude.json)
 # ------------------------------------------------------------------------------
 step "claude"
+if [[ "$OS" == Linux ]] && ! command -v claude &>/dev/null && [[ ! -x "$HOME/.local/bin/claude" ]]; then
+  log "Installing Claude Code (native installer → ~/.local/bin/claude)..."
+  curl -fsSL https://claude.ai/install.sh | bash || log "Claude Code install failed — see https://docs.claude.com/en/docs/claude-code/setup"
+fi
+export PATH="$HOME/.local/bin:$PATH"
 if command -v claude &>/dev/null; then
   if claude mcp get linear &>/dev/null; then
     log "MCP linear: present"
@@ -277,20 +328,27 @@ if command -v claude &>/dev/null; then
     claude mcp add --scope user --transport http linear https://mcp.linear.app/mcp && log "MCP linear: added"
   fi
 else
-  log "skip: claude not on PATH (brew bundle installs the claude-code cask)"
+  log "skip: claude not on PATH (macOS: claude-code cask; Linux: native installer above)"
 fi
 
 # ------------------------------------------------------------------------------
 # 10. shell — make zsh the login shell
 # ------------------------------------------------------------------------------
 step "shell"
+# Prefer the OS zsh: it's in /etc/shells (Homebrew's, esp. on Linux, isn't)
 ZSH_BIN="$(command -v zsh)"
+for z in /bin/zsh /usr/bin/zsh; do [[ -x "$z" ]] && { ZSH_BIN="$z"; break; }; done
 if [[ "$(basename "${SHELL:-}")" == "zsh" ]]; then
   log "login shell already zsh ($SHELL)"
 elif [[ "${SHELL:-}" != "$ZSH_BIN" ]]; then
   if grep -q "^$ZSH_BIN$" /etc/shells || [[ "$ZSH_BIN" == /bin/zsh ]]; then
     if confirm "Change login shell to $ZSH_BIN?"; then
-      chsh -s "$ZSH_BIN" && log "login shell: $ZSH_BIN"
+      # Linux chsh asks for your password via PAM; sudo is already authenticated
+      if [[ "$OS" == Linux ]]; then
+        sudo chsh -s "$ZSH_BIN" "$(id -un)" && log "login shell: $ZSH_BIN (log out/in to apply)"
+      else
+        chsh -s "$ZSH_BIN" && log "login shell: $ZSH_BIN"
+      fi
     fi
   else
     log "$ZSH_BIN not in /etc/shells; add it (sudo) then: chsh -s $ZSH_BIN"

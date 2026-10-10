@@ -4,7 +4,7 @@
 # ------------------------------------------------------------------------------
 # Run before committing and in CI. Checks:
 #   zsh -n        zsh/*, fzf/*
-#   bash -n       setup.sh, scripts/*.sh, claude/*.sh, claude/hooks/*.sh
+#   bash -n       setup.sh, scripts/*.sh, scripts/linux/*.sh, claude/*.sh, claude/hooks/*.sh
 #   shell lint    shellcheck on the same files (if installed)
 #   bash 3.2      setup.sh avoids bash 4+ syntax (fresh Mac = /bin/bash 3.2)
 #   tmux          config parses on a private socket
@@ -26,7 +26,7 @@ fail() { echo "[lint]   FAIL $*"; FAILED=1; }
 skip() { echo "[lint]   skip $*"; }
 
 ZSH_FILES=("$REPO"/zsh/.zshrc "$REPO"/zsh/.zprofile "$REPO"/zsh/aliases.shrc "$REPO"/zsh/functions.shrc "$REPO"/fzf/*.zsh)
-BASH_FILES=("$REPO"/setup.sh "$REPO"/scripts/*.sh "$REPO"/scripts/tmux-sessionizer "$REPO"/claude/statusline.sh "$REPO"/claude/hooks/*.sh)
+BASH_FILES=("$REPO"/setup.sh "$REPO"/scripts/*.sh "$REPO"/scripts/linux/*.sh "$REPO"/scripts/tmux-sessionizer "$REPO"/claude/statusline.sh "$REPO"/claude/hooks/*.sh)
 
 log "zsh syntax"
 for f in "${ZSH_FILES[@]}"; do

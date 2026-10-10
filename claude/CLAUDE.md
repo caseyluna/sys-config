@@ -1,7 +1,7 @@
 # Global instructions (all projects)
 
 ## Environment
-- macOS (Apple Silicon), zsh, Homebrew, tmux, Neovim. Dotfiles live in `~/sys-config` (`$SYS_CONFIG`).
+- macOS (Apple Silicon) or Linux (Fedora / Ubuntu), zsh, Homebrew (Linuxbrew on Linux), tmux, Neovim. Dotfiles live in `~/sys-config` (`$SYS_CONFIG`). Check `uname` before using macOS-only commands (`pbcopy`/`open` are shimmed on Linux).
 - Prefer `rg` over grep, `fd` over find, `bat` over cat, `jq`/`yq` for JSON/YAML, `uv` for Python.
 - Python projects: `uv run` / `uv sync`; tests with `pytest`. Lint with `ruff`, types with `mypy`.
 
