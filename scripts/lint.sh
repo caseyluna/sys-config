@@ -11,6 +11,8 @@
 #   nvim          config loads headless from the repo
 #   stylua        --check nvim/ (if installed)
 #   jq            every .json in the repo parses
+#   docs          keymaps/aliases/functions are in docs/ (scripts/docs-check.py;
+#                 warning locally, failure in CI — docs-sync.yml writes them)
 # Usage: bash scripts/lint.sh   → exit 0 all good, 1 otherwise
 # ------------------------------------------------------------------------------
 
@@ -82,6 +84,19 @@ if command -v jq &>/dev/null; then
   done < <(find "$REPO" -name '*.json' -not -path '*/.git/*' -not -path '*/.tmux/*')
 else
   skip "jq not installed"
+fi
+
+log "docs"
+if command -v python3 &>/dev/null; then
+  if out=$(python3 "$REPO/scripts/docs-check.py"); then
+    ok "docs/ covers all keymaps, aliases, functions"
+  elif [[ -n "${CI:-}" ]]; then
+    echo "$out"; fail "docs/ out of date (python3 scripts/docs-check.py)"
+  else
+    echo "$out"; echo "[lint]   warn docs/ out of date — CI fails until docs-sync (or you) updates them"
+  fi
+else
+  skip "python3 not installed"
 fi
 
 echo

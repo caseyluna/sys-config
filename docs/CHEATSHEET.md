@@ -30,6 +30,8 @@ Neovim keys are in [KEYS.md](KEYS.md).
 
 **Kubernetes** `kgp kgj kjr kjf`
 
+**direnv** `da` allow · `dr` reload
+
 **Claude** `cc` claude · `ccc` continue · `ccr` resume
 
 **System** `ports` · `ip` · `devip` · `flushdns` · `brewup` · `brewdiff` (installed but not in Brewfile)
@@ -44,14 +46,15 @@ Neovim keys are in [KEYS.md](KEYS.md).
 | `rgf pat` | ripgrep → fzf (bat preview) → open in nvim at line |
 | `extract f` | unpack any archive |
 | `killport n` · `fkill` · `serve [port]` | kill by port · fuzzy kill · http.server |
-| `gbf` · `grbi [n]` · `gbclean` · `gprco` · `gwta br` | fuzzy branch switch · rebase -i last n · delete merged · fuzzy PR checkout · worktree add + cd |
+| `gbf` · `grbi [n]` · `gbclean` · `gprco` · `gwta br` · `glogone [n]` | fuzzy branch switch · rebase -i last n · delete merged · fuzzy PR checkout · worktree add + cd · last n commits oneline |
 | `ta [name]` · `tk` | tmux attach-or-create · fuzzy kill session |
 | `va [dir]` · `pyclean` | activate venv · remove caches |
 | `csvq f [sql]` · `pq f [sql]` · `jqf f` | duckdb over CSV / parquet (table `t`) · browse JSON paths |
 | `tfw` | fuzzy terraform workspace |
 | `dklf` · `dksh` · `kx` · `kns` · `kl` · `kex` | fuzzy container logs / shell · kube context / namespace / pod logs / pod shell |
 | `ccd br` | worktree for branch + claude |
-| `gcpp` · `query-gcp` · `bigquery` · `delete_branches` · `phil-db-*` | gcloud / BigQuery / Cloud SQL helpers (see file) |
+| `gcpp` · `query-gcp` · `bigquery` · `delete_branches` | gcloud / BigQuery helpers · interactive branch delete (see file) |
+| `phil-db-up db…\|--all` · `phil-db-switch` · `phil-db-status` · `phil-db-down` | Cloud SQL proxy: start sockets · pick socket → mysql · show proxies · stop all |
 
 ## tmux (prefix = `Ctrl-A`)
 

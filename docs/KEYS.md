@@ -70,6 +70,7 @@ Leader is `<Space>`. Press `<Space>` and pause — which-key lists every group. 
 | Show diagnostics for this line | `gl` | lsp |
 | Next / prev diagnostic | `]d` / `[d` | lsp |
 | Project diagnostics panel / this buffer | `<Space>xx` / `<Space>xd` | trouble |
+| Search TODO comments (telescope) | `<Space>ft` | todo-comments |
 | Quickfix / loclist / todos / LSP refs panel | `<Space>xq` `<Space>xl` `<Space>xt` `<Space>xr` | trouble |
 | Restart LSP | `<Space>rs` | lsp |
 
