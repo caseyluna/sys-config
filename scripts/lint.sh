@@ -6,6 +6,7 @@
 #   zsh -n        zsh/*, fzf/*
 #   bash -n       setup.sh, scripts/*.sh, claude/*.sh, claude/hooks/*.sh
 #   shell lint    shellcheck on the same files (if installed)
+#   bash 3.2      setup.sh avoids bash 4+ syntax (fresh Mac = /bin/bash 3.2)
 #   tmux          config parses on a private socket
 #   nvim          config loads headless from the repo
 #   stylua        --check nvim/ (if installed)
@@ -34,6 +35,13 @@ log "bash syntax"
 for f in "${BASH_FILES[@]}"; do
   bash -n "$f" 2>/dev/null && ok "$f" || fail "$f"
 done
+
+log "bash 3.2 compat (setup.sh runs before Homebrew bash exists)"
+if b4=$(grep -nE 'declare -[An]|local -A|mapfile|readarray|\$\{[A-Za-z_]+(,,|\^\^)|&>>|coproc' "$REPO/setup.sh"); then
+  fail "setup.sh uses bash 4+ syntax: $b4"
+else
+  ok "setup.sh"
+fi
 
 log "shellcheck"
 if command -v shellcheck &>/dev/null; then

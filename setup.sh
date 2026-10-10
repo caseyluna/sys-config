@@ -186,15 +186,17 @@ else
   log "Oh My Zsh: present"
 fi
 ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
-declare -A ZSH_PLUGINS=(
-  [fzf-tab]="https://github.com/Aloxaf/fzf-tab"
-  [zsh-autosuggestions]="https://github.com/zsh-users/zsh-autosuggestions"
-  [fast-syntax-highlighting]="https://github.com/zdharma-continuum/fast-syntax-highlighting"
+# "name url" pairs — no associative arrays: a fresh Mac runs this with /bin/bash 3.2
+ZSH_PLUGINS=(
+  "fzf-tab https://github.com/Aloxaf/fzf-tab"
+  "zsh-autosuggestions https://github.com/zsh-users/zsh-autosuggestions"
+  "fast-syntax-highlighting https://github.com/zdharma-continuum/fast-syntax-highlighting"
 )
-for name in "${!ZSH_PLUGINS[@]}"; do
+for entry in "${ZSH_PLUGINS[@]}"; do
+  name="${entry%% *}" url="${entry#* }"
   if [[ ! -d "$ZSH_CUSTOM/plugins/$name" ]]; then
     log "Installing zsh plugin $name..."
-    git clone -q --depth 1 "${ZSH_PLUGINS[$name]}" "$ZSH_CUSTOM/plugins/$name"
+    git clone -q --depth 1 "$url" "$ZSH_CUSTOM/plugins/$name"
   else
     log "zsh plugin $name: present"
   fi
