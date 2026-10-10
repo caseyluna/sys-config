@@ -34,6 +34,13 @@ on:
       - "Taskfile.yml"
       - ".github/workflows/pr-autofix.yml"
       - "!nvim/lazy-lock.json"
+  # ci-autofix.yml re-runs this on the bot's new head (GITHUB_TOKEN pushes
+  # don't trigger pull_request).
+  workflow_dispatch:
+    inputs:
+      base:
+        description: "PR base branch (what the diff is against)"
+        default: dev
 
 permissions:
   contents: write # push fix/docs commits
@@ -42,22 +49,22 @@ permissions:
   id-token: write # claude-code-action
 
 concurrency:
-  group: pr-autofix-${{ github.head_ref }}
+  group: pr-autofix-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
   autofix:
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: macos-latest
     timeout-minutes: 45
     env:
-      BASE: ${{ github.event.pull_request.base.ref }}
-      HEAD_REF: ${{ github.head_ref }}
+      BASE: ${{ github.event.pull_request.base.ref || inputs.base }}
+      HEAD_REF: ${{ github.head_ref || github.ref_name }}
       SHELL: /bin/zsh # setup.sh skips chsh when the shell is already zsh
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.head_ref || github.ref_name }}
           fetch-depth: 0
 
       - name: Install core tools

@@ -24,4 +24,12 @@ Force the full install on a PR: add the `full-bootstrap` label. Preview the deci
 
 **PR autofix** (`.github/workflows/pr-autofix.yml`, on PRs touching config): bootstraps a clean macOS runner with `setup.sh --no-brew`, runs `smoke.py`; if red, Claude fixes the config (`fix: resolve smoke-check failures`). Then Claude syncs `docs/` to the diff (`docs: sync with config changes`), pushes, re-runs lint, and the job ends with `smoke.py` + `docs-check.py` (must be green). Allow-list and `scripts/` are never bot-edited. **Pull before continuing work on the branch.** One-time setup: `claude setup-token`, then `gh secret set CLAUDE_CODE_OAUTH_TOKEN`.
 
+**CI autofix** (`.github/workflows/ci-autofix.yml`): whenever **Lint**, **Linux bootstrap** or **PR autofix** fails on a PR branch, Claude reads the failed job's log, fixes the config, verifies what it can on Ubuntu (`lint.sh`, `docs-check.py`, `zsh -n`, `shellcheck`), pushes `fix(ci-autofix): <workflow> failure` and re-runs all three checks on the new head. At most 2 attempts per PR, then it comments on the PR instead. If the cause is CI itself (runner image, the workflow, flaky network) it comments a diagnosis rather than committing. It never edits `.github/`, the check scripts or the allow-lists, so a fix can't weaken a check. It runs from `main`'s copy of the workflow (GitHub's `workflow_run` rule), so edits take effect after merging to `main`.
+
+| Workflow | Checks | Fixes automatically |
+|---|---|---|
+| Lint | syntax, shellcheck, tmux/nvim load, JSON, docs coverage | ✓ via CI autofix (docs also via PR autofix) |
+| PR autofix | macOS bootstrap + `smoke.py` | ✓ itself (smoke + docs); bootstrap failures via CI autofix |
+| Linux bootstrap | Ubuntu/Fedora `setup.sh` (quick or full) | ✓ via CI autofix |
+
 Clean-room: see [INSTALL.md](INSTALL.md#clean-room-test).
