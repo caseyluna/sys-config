@@ -74,6 +74,11 @@ jobs:
       - name: Bootstrap (setup.sh)
         run: bash setup.sh --no-brew
 
+      # setup.sh links claude/ into ~/.claude (personal allow-list, hooks). The CI
+      # Claude must only get the tools granted below, so drop those links.
+      - name: Remove personal Claude config
+        run: rm -rf ~/.claude
+
       - name: Smoke check
         id: smoke
         continue-on-error: true

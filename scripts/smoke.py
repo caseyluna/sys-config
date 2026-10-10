@@ -207,7 +207,43 @@ def check_tmux() -> set[str]:
         for line in (r.stderr + r.stdout).splitlines():
             if line.strip():
                 fail(f"tmux: config: {line.strip()}")
-        time.sleep(1)  # let `run` plugin scripts finish
+
+        # Newer tmux may finish sourcing asynchronously: wait until an option the
+        # config sets is live (and `run` plugin scripts have had a moment).
+        m = re.search(
+            r"^set -g history-limit (\d+)",
+            (REPO / "tmux/.tmux.conf").read_text(),
+            re.MULTILINE,
+        )
+        marker = m.group(1) if m else None
+        deadline = time.time() + 15
+        while marker and time.time() < deadline:
+            if tmux("show", "-gv", "history-limit").stdout.strip() == marker:
+                break
+            time.sleep(0.25)
+        else:
+            if marker:
+                got = tmux("show", "-gv", "history-limit").stdout.strip()
+                msgs = tmux("show-messages").stdout.strip().splitlines()[-3:]
+                fail(
+                    f"tmux: config never finished loading (history-limit={got!r}, want {marker}); messages: {msgs}"
+                )
+                return set()
+        time.sleep(1)
+
+        # bind-key [-r] [-N note] -T <table> <key> <command…> — one list per table
+        live_by_table: dict[str, dict[str, str]] = {}
+
+        def live_table(table: str) -> dict[str, str]:
+            if table not in live_by_table:
+                out = tmux("list-keys", "-T", table).stdout
+                pat = re.compile(r"-T\s+\S+\s+(\S+)\s+(\S+)")
+                live_by_table[table] = {
+                    mm.group(1).replace("\\", ""): mm.group(2)
+                    for mm in map(pat.search, out.splitlines())
+                    if mm
+                }
+            return live_by_table[table]
 
         seen: dict[tuple[str, str], int] = {}
         for table, key, cmd, n in tmux_conf_binds():
@@ -216,11 +252,7 @@ def check_tmux() -> set[str]:
                     f"tmux: {table} {key}: bound twice in tmux.conf (lines {seen[(table, key)]} and {n})"
                 )
             seen[(table, key)] = n
-            live = tmux("list-keys", "-T", table, key).stdout.split()
-            # bind-key [-r] -T <table> <key> <command…>
-            live_cmd = next(
-                (w for i, w in enumerate(live) if i > 0 and live[i - 1] == key), ""
-            )
+            live_cmd = live_table(table).get(key.replace("\\", ""), "")
             want = TMUX_ALIASES.get(cmd, cmd)
             if live_cmd and live_cmd != want and not live_cmd.startswith(want):
                 fail(
