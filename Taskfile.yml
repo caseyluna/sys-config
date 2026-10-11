@@ -67,6 +67,19 @@ tasks:
     cmds:
       - bash "{{.REPO}}/setup.sh" {{.CLI_ARGS}}
 
+  setup:config:
+    desc: Re-apply config only — links, Oh My Zsh, tmux plugins; skips Homebrew + Neovim installs
+    cmds:
+      - bash "{{.REPO}}/setup.sh" --no-brew --no-nvim {{.CLI_ARGS}}
+
+  setup:server:
+    desc: "Headless Linux box: no prompts, no GUI apps (Ghostty, fonts, flatpaks)"
+    preconditions:
+      - sh: '[ "$(uname -s)" = Linux ]'
+        msg: "setup:server is for headless Linux — on macOS use `task setup`."
+    cmds:
+      - bash "{{.REPO}}/setup.sh" --yes --no-gui {{.CLI_ARGS}}
+
   links:
     desc: Re-create symlinks only
     cmds:

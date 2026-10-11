@@ -18,6 +18,7 @@ Quick facts: Neovim leader `<Space>` · tmux prefix `Ctrl-A` · shell reload `sz
 | Path | What it is |
 |---|---|
 | `setup.sh` | One-shot bootstrap. `do_links()` is the single source of truth for symlinks. |
+| `install.sh` | One-line bootstrap (`curl … \| bash`): ensures git, clones the repo, runs `setup.sh`. |
 | `Brewfile` | Homebrew packages, grouped by purpose with a comment on each. |
 | `zsh/` | `.zprofile` (PATH/env once) · `.zshrc` (interactive) · `aliases.shrc` · `functions.shrc` |
 | `fzf/` | `key-bindings.zsh` loader + `*-widget.zsh` custom widgets |
