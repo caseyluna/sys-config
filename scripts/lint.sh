@@ -26,7 +26,7 @@ fail() { echo "[lint]   FAIL $*"; FAILED=1; }
 skip() { echo "[lint]   skip $*"; }
 
 ZSH_FILES=("$REPO"/zsh/.zshrc "$REPO"/zsh/.zprofile "$REPO"/zsh/aliases.shrc "$REPO"/zsh/functions.shrc "$REPO"/fzf/*.zsh)
-BASH_FILES=("$REPO"/setup.sh "$REPO"/scripts/*.sh "$REPO"/scripts/linux/*.sh "$REPO"/scripts/tmux-sessionizer "$REPO"/claude/statusline.sh "$REPO"/claude/hooks/*.sh)
+BASH_FILES=("$REPO"/setup.sh "$REPO"/install.sh "$REPO"/scripts/*.sh "$REPO"/scripts/linux/*.sh "$REPO"/scripts/tmux-sessionizer "$REPO"/claude/statusline.sh "$REPO"/claude/hooks/*.sh)
 
 log "zsh syntax"
 for f in "${ZSH_FILES[@]}"; do
@@ -38,11 +38,11 @@ for f in "${BASH_FILES[@]}"; do
   bash -n "$f" 2>/dev/null && ok "$f" || fail "$f"
 done
 
-log "bash 3.2 compat (setup.sh runs before Homebrew bash exists)"
-if b4=$(grep -nE 'declare -[An]|local -A|mapfile|readarray|\$\{[A-Za-z_]+(,,|\^\^)|&>>|coproc' "$REPO/setup.sh"); then
-  fail "setup.sh uses bash 4+ syntax: $b4"
+log "bash 3.2 compat (setup.sh / install.sh run before Homebrew bash exists)"
+if b4=$(grep -nE 'declare -[An]|local -A|mapfile|readarray|\$\{[A-Za-z_]+(,,|\^\^)|&>>|coproc' "$REPO/setup.sh" "$REPO/install.sh"); then
+  fail "setup.sh/install.sh use bash 4+ syntax: $b4"
 else
-  ok "setup.sh"
+  ok "setup.sh, install.sh"
 fi
 
 log "shellcheck"
